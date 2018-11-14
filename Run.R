@@ -28,8 +28,8 @@ for(i in names(FOLDERS_SUGGEST)) for(j in FOLDERS_SUGGEST[[i]]){
   if(dir.exists(j)) FOLDERS[[i]] <- j 
 }
 
-FOLDER_RESULTS_TODAY <- file.path(FOLDER_RESULTS,lubridate::today())
-dir.create(FOLDER_RESULTS_TODAY)
+FOLDERS$results_today <- file.path(FOLDERS$results,lubridate::today())
+dir.create(FOLDERS$results_today)
 
 ################
 # Load libraries
@@ -45,7 +45,7 @@ library(ggplot2)
 q <- ggplot(mpg, aes(displ, hwy, colour = class))
 q <- q + geom_point()
 
-ggsave(file.path(FOLDER_RESULTS_TODAY,"graph.png"),
+ggsave(file.path(FOLDERS$results_today,"graph.png"),
        plot = q,
        width = 297,
        height = 210, 
