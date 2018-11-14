@@ -9,25 +9,23 @@
 # Folder setup
 ################
 
-if(.Platform$OS.type=="unix"){
-  # richard's computer
-  FOLDER_CODE <- file.path("/git",
-                           "GD-Article-1")
-  
-  FOLDER_DATA <- file.path("/Volumes",
-                           "crypt_data/")
-  
-  FOLDER_RESULTS <- file.path("/Filr",
-                              "Shared with Me",
-                              "Gender dysphoria -shared folder",
-                              "results")
-} else {
-  # malin's computer
-  FOLDER_CODE <- file.path("XX")
-  
-  FOLDER_DATA <- file.path("XX")
-  
-  FOLDER_RESULTS <- file.path("XX")
+FOLDERS_SUGGEST <- list()
+FOLDERS_SUGGEST$code <- c(
+  file.path("/git","GD-Article-1"),
+  file.path("/git","GD-Article-1")
+)
+FOLDERS_SUGGEST$data <- c(
+  file.path("/Volumes","crypt_data"),
+  file.path("/Users","malin976","Documents","Article-1-data")
+)
+FOLDERS_SUGGEST$results <- c(
+  file.path("/Filr", "Shared with Me", "Gender dysphoria -shared folder", "results"),
+  file.path("/Filr","Mina filer","Gender dysphoria -shared folder", "results")
+)
+
+FOLDERS <- list()
+for(i in names(FOLDERS_SUGGEST)) for(j in FOLDERS_SUGGEST[[i]]){
+  if(dir.exists(j)) FOLDERS[[i]] <- j 
 }
 
 FOLDER_RESULTS_TODAY <- file.path(FOLDER_RESULTS,lubridate::today())
