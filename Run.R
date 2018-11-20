@@ -9,10 +9,11 @@
 # Folder setup
 ################
 
+
 FOLDERS_SUGGEST <- list()
 FOLDERS_SUGGEST$code <- c(
   file.path("/git","GD-Article-1"),
-  file.path("/git","GD-Article-1")
+  file.path("/Users","malin976","Documents","GitHub","GD-Article-1")
 )
 FOLDERS_SUGGEST$data <- c(
   file.path("/Volumes","crypt_data"),
@@ -20,7 +21,7 @@ FOLDERS_SUGGEST$data <- c(
 )
 FOLDERS_SUGGEST$results <- c(
   file.path("/Filr", "Shared with Me", "Gender dysphoria -shared folder", "results"),
-  file.path("/Filr","Mina filer","Gender dysphoria -shared folder", "results")
+  file.path("/Users","malin976","Filr","Mina filer","Gender dysphoria -shared folder", "results")
 )
 
 FOLDERS <- list()
