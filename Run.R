@@ -62,7 +62,7 @@ demografi[DodDatum!="",dod:=as.Date(sprintf(
   stringr::str_sub(DodDatum,1,4),
   stringr::str_sub(DodDatum,5,6),
   stringr::str_sub(DodDatum,7,8)
-  ))]
+))]
 demografi[,fodelseman:=NULL]
 demografi[,DodDatum:=NULL]
 setnames(demografi,"lopnr","LopNr")
@@ -76,150 +76,230 @@ setorder(patients,LopNr,INDATUM)
 patients[,isF64_089:=FALSE]
 patients[,isF64_0:=FALSE]
 patients[,isF64_89:=FALSE]
+patients[,isTranssexual_ICD_89:=FALSE]
 for(i in stringr::str_subset(names(patients), "^DIA")){
   patients[stringr::str_detect(get(i),"^F640"), isF64_0:=TRUE]
   patients[stringr::str_detect(get(i),"^F648"), isF64_89:=TRUE]
   patients[stringr::str_detect(get(i),"^F649"), isF64_89:=TRUE]
+  patients[get(i)=="302,31",isTranssexual_ICD_89:=TRUE]
+  patients[get(i)=="302,99",isTranssexual_ICD_89:=TRUE]
+  patients[get(i)=="302X",isTranssexual_ICD_89:=TRUE]
+  #patients[stringr::str_detect(get(i),"^302"), isTranssexual_ICD_89:=TRUE]
 }
 patients[,isF64_089:=isF64_0 | isF64_89]
+
+patients[,hadTranssexual_ICD_89:=as.logical(max(isTranssexual_ICD_89)),by=LopNr]
+
+xtabs(~patients$isTranssexual_ICD_89)
+xtabs(~patients$hadTranssexual_ICD_89+patients$isF64_089)
 
 d <- patients[isF64_089==TRUE]
 nrow(d)
 d <- merge(d,demografi,by="LopNr")
 nrow(d)
 
-d[,firstDate:=min(INDATUM),by=LopNr]
-d[,firstAge:=as.numeric(difftime(firstDate,dob,units="days"))/365.25,by=LopNr]
+xtabs(~d$hadTranssexual_ICD_89)
+
+stringr::str_subset(sort(unique(c(
+  patients$DIA1,
+  patients$DIA2,
+  patients$DIA3,
+  patients$DIA4,
+  patients$DIA5,
+  patients$DIA6,
+  patients$DIA7,
+  patients$DIA8,
+  patients$DIA9,
+  patients$DIA10,
+  patients$DIA11,
+  patients$DIA12,
+  patients$DIA13,
+  patients$DIA14,
+  patients$DIA15,
+  patients$DIA16,
+  patients$DIA17
+  ))),
+  "^302")
+
+d[,dateFirst:=min(INDATUM),by=LopNr]
+d[,yearFirst:=RAWmisc::YearN(dateFirst),by=LopNr]
+d[,ageFirst:=as.numeric(difftime(dateFirst,dob,units="days"))/365.25,by=LopNr]
 d[,age:=as.numeric(difftime(INDATUM,dob,units="days"))/365.25,by=LopNr]
-d[,firstAgeCat:=cut(firstAge,breaks=c(0,12,15,20,30,100))]
+d[,ageFirstCat:=cut(ageFirst,breaks=c(0,12,15,20,30,100))]
 
-d[,days:=as.numeric(difftime(INDATUM,firstDate,units="days")),by=LopNr]
+d[,days:=as.numeric(difftime(INDATUM,dateFirst,units="days")),by=LopNr]
 
-d[isF64_0==T,firstF64_0:=min(days),by=LopNr]
-d[,firstF64_0:=min(firstF64_0,na.rm=T),by=LopNr]
-d[is.infinite(firstF64_0),firstF64_0:=NA]
+d[isF64_0==T,daysFirst_F64_0:=min(days),by=LopNr]
+d[,daysFirst_F64_0:=min(daysFirst_F64_0,na.rm=T),by=LopNr]
+d[is.infinite(daysFirst_F64_0),daysFirst_F64_0:=NA]
 
-d[isF64_89==T,firstF64_89:=min(days),by=LopNr]
-d[,firstF64_89:=min(firstF64_89,na.rm=T),by=LopNr]
-d[is.infinite(firstF64_89),firstF64_89:=NA]
+d[isF64_89==T,daysFirst_F64_89:=min(days),by=LopNr]
+d[,daysFirst_F64_89:=min(daysFirst_F64_89,na.rm=T),by=LopNr]
+d[is.infinite(daysFirst_F64_89),daysFirst_F64_89:=NA]
 
-d[isF64_0==T,firstF64_0_age:=min(age),by=LopNr]
-d[,firstF64_0_age:=min(firstF64_0_age,na.rm=T),by=LopNr]
-d[is.infinite(firstF64_0_age),firstF64_0_age:=NA]
+d[isF64_0==T,daysLast_F64_0:=max(days),by=LopNr]
+d[,daysLast_F64_0:=min(daysLast_F64_0,na.rm=T),by=LopNr]
+d[is.infinite(daysLast_F64_0),daysLast_F64_0:=NA]
 
-d[isF64_89==T,firstF64_89_age:=min(age),by=LopNr]
-d[,firstF64_89_age:=min(firstF64_89_age,na.rm=T),by=LopNr]
-d[is.infinite(firstF64_89_age),firstF64_89_age:=NA]
+d[isF64_89==T,daysLast_F64_89:=max(days),by=LopNr]
+d[,daysLast_F64_89:=min(daysLast_F64_89,na.rm=T),by=LopNr]
+d[is.infinite(daysLast_F64_89),daysLast_F64_89:=NA]
+
+d[isF64_0==T,ageFirst_F64_0:=min(age),by=LopNr]
+d[,ageFirst_F64_0:=min(ageFirst_F64_0,na.rm=T),by=LopNr]
+d[is.infinite(ageFirst_F64_0),ageFirst_F64_0:=NA]
+
+d[isF64_89==T,ageFirst_F64_89:=min(age),by=LopNr]
+d[,ageFirst_F64_89:=min(ageFirst_F64_89,na.rm=T),by=LopNr]
+d[is.infinite(ageFirst_F64_89),ageFirst_F64_89:=NA]
+
+d[,category:=as.character(NA)]
+d[is.na(daysFirst_F64_0) & !is.na(daysFirst_F64_89),category:="Only F64.8/9"]
+d[!is.na(daysFirst_F64_0) & is.na(daysFirst_F64_89),category:="Only F64.0"]
+d[daysFirst_F64_0==0 & daysFirst_F64_89==0,category:="F64.0 and F64.8/9 at first consult"]
+d[daysLast_F64_0==daysLast_F64_89,category:="F64.0 and F64.8/9 at last consult"]
+d[daysFirst_F64_0==0 & daysFirst_F64_89>0 & daysLast_F64_0>daysLast_F64_89,category:="F64.0 -> F64.8/9 -> F64.0"]
+d[daysFirst_F64_0==0 & daysFirst_F64_89>0 & daysLast_F64_0<daysLast_F64_89,category:="F64.0 -> F64.8/9"]
+d[daysFirst_F64_0>0 & daysFirst_F64_89==0 & daysLast_F64_89>daysLast_F64_0,category:="F64.8/9 -> F64.0 -> F64.8/9"]
+d[daysFirst_F64_0>0 & daysFirst_F64_89==0 & daysLast_F64_89<daysLast_F64_0,category:="F64.8/9 -> F64.0"]
+d[is.na(category)]
+xtabs(~d$category,addNA=T)
 
 
 toPlot <- d[,.(
   numF64_089=sum(isF64_089),
   numF64_0=sum(isF64_0),
   numF64_89=sum(isF64_89),
-  firstF64_0=mean(firstF64_0),
-  firstF64_89=mean(firstF64_89),
-  firstF64_0_age=mean(firstF64_0_age),
-  firstF64_89_age=mean(firstF64_89_age)
-),by=.(LopNr,firstAge)]
-toPlot[,firstAgeCat:=cut(firstAge,breaks=seq(0,100,2))]
-toPlot[,firstF64_0_ageCat:=cut(firstF64_0_age,breaks=seq(0,100,1))]
-toPlot[,firstF64_89_ageCat:=cut(firstF64_89_age,breaks=seq(0,100,1))]
+  daysFirst_F64_0=mean(daysFirst_F64_0),
+  daysFirst_F64_89=mean(daysFirst_F64_89),
+  daysLast_F64_0=mean(daysLast_F64_0),
+  daysLast_F64_89=mean(daysLast_F64_89),
+  ageFirst_F64_0=mean(ageFirst_F64_0),
+  ageFirst_F64_89=mean(ageFirst_F64_89)
+),by=.(LopNr,ageFirst,yearFirst,category,hadTranssexual_ICD_89)]
+toPlot[,firstAgeCat:=cut(ageFirst,breaks=seq(0,100,2))]
+toPlot[,firstF64_0_ageCat:=cut(ageFirst_F64_0,breaks=seq(0,100,1))]
+toPlot[,firstF64_89_ageCat:=cut(ageFirst_F64_89,breaks=seq(0,100,1))]
 
-toPlot[,category:=as.character(NA)]
-toPlot[is.na(firstF64_0) & !is.na(firstF64_89),category:="Only F64.8/9"]
-toPlot[!is.na(firstF64_0) & is.na(firstF64_89),category:="Only F64.0"]
-toPlot[firstF64_0==0 & firstF64_89>0,category:="F64.0 then F64.8/9"]
-toPlot[firstF64_0>0 & firstF64_89==0,category:="F64.8/9 then F64.0"]
-toPlot[firstF64_0==0 & firstF64_89==0,category:="F64.0 and F64.8/9 at first consult"]
-toPlot[is.na(category)]
-xtabs(~toPlot$category,addNA=T)
-
-q <- ggplot(toPlot,aes(x=category,y=firstAge))
-q <- q + geom_boxplot(alpha=0.75)
-q <- q + scale_x_discrete("")
-q <- q + scale_y_continuous("Age at first consultation",breaks=seq(0,100,4))
-#q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5))
-SaveA4(q,
-       file.path(FOLDERS$results_today,"descriptives","diagnosis_categories_age_first_consult.png"),
-       landscape=T)
+toPlot[,hadTranssexual_ICD_89:=sprintf("hadTranssexual_ICD_89=%s",hadTranssexual_ICD_89)]
 
 q <- ggplot(toPlot,aes(x=category))
 q <- q + geom_bar(alpha=0.75)
 q <- q + scale_x_discrete("")
 q <- q + scale_y_continuous("Number of people")
-#q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5))
+q <- q + coord_flip()
+#q <- q + labs(title="People who initially had a F64.8/9 diagnosis and subsequently F64.0")
+#q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 SaveA4(q,
        file.path(FOLDERS$results_today,"descriptives","diagnosis_categories.png"),
        landscape=T)
 
-q <- ggplot(toPlot[firstF64_89==0 & firstF64_0>0],aes(x=firstAge,y=firstF64_0/365.25))
+
+q <- ggplot(toPlot,aes(x=category))
+q <- q + geom_bar(alpha=0.75)
+q <- q + facet_wrap(~hadTranssexual_ICD_89)
+q <- q + scale_x_discrete("")
+q <- q + scale_y_continuous("Number of people")
+q <- q + coord_flip()
+#q <- q + labs(title="People who initially had a F64.8/9 diagnosis and subsequently F64.0")
+#q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+SaveA4(q,
+       file.path(FOLDERS$results_today,"descriptives","diagnosis_categories_by_hadTranssexual_ICD_89.png"),
+       landscape=T)
+
+q <- ggplot(toPlot,aes(x=category))
+q <- q + geom_bar(alpha=0.75)
+q <- q + facet_wrap(~yearFirst)
+q <- q + scale_x_discrete("")
+q <- q + scale_y_continuous("Number of people")
+q <- q + coord_flip()
+q <- q + labs(title="People displayed by the year of first F68.0/8/9 diagnosis")
+#q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+SaveA4(q,
+       file.path(FOLDERS$results_today,"descriptives","diagnosis_categories_by_year.png"),
+       landscape=T)
+
+q <- ggplot(toPlot,aes(x=category,y=ageFirst))
+q <- q + geom_boxplot(alpha=0.75)
+q <- q + scale_x_discrete("")
+q <- q + scale_y_continuous("Age at first consultation",breaks=seq(0,100,4))
+q <- q + coord_flip()
+#q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+SaveA4(q,
+       file.path(FOLDERS$results_today,"descriptives","diagnosis_categories_age_first_consult.png"),
+       landscape=T)
+
+
+q <- ggplot(toPlot,aes(x=ageFirst,y=daysFirst_F64_0/365.25))
 q <- q + geom_point(alpha=0.2)
 q <- q + geom_smooth()
-q <- q + scale_x_continuous("Age at first consultation",breaks=seq(0,100,2))
+q <- q + facet_wrap(~category)
+q <- q + scale_x_continuous("Age at first consultation",breaks=seq(0,100,4))
 q <- q + scale_y_continuous("Years waiting until first F64.0 diagnosis",breaks=seq(0,20,2))
-q <- q + labs(title="People who initially had a F64.8/9 diagnosis and subsequently F64.0")
+#q <- q + labs(title="People who initially had a F64.8/9 diagnosis and subsequently F64.0")
 SaveA4(q,
-       file.path(FOLDERS$results_today,"descriptives","time_from_F64_89_until_F64_0.png"),
-       landscape=F,
-       scalev=0.5)
+       file.path(FOLDERS$results_today,"descriptives","time_until_first_F64_0.png"),
+       landscape=T,
+       scalev=1)
 
-q <- ggplot(toPlot[firstF64_89==0 & firstF64_0>0],aes(x=firstAgeCat,y=firstF64_0/365.25))
-q <- q + geom_boxplot()
-q <- q + scale_x_discrete("Age at first consultation")
-q <- q + scale_y_continuous("Years waiting until first F64.0 diagnosis",breaks=seq(0,20,2))
-q <- q + labs(title="People who initially had a F64.8/9 diagnosis and subsequently F64.0")
-q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5))
-SaveA4(q,
-       file.path(FOLDERS$results_today,"descriptives","time_from_F64_89_until_F64_0_boxplot.png"),
-       landscape=F,
-       scalev=0.5)
-
-q <- ggplot(toPlot[firstF64_89>0 & firstF64_0==0],aes(x=firstAge,y=firstF64_89/365.25))
+q <- ggplot(toPlot,aes(x=ageFirst,y=daysFirst_F64_89/365.25))
 q <- q + geom_point(alpha=0.2)
 q <- q + geom_smooth()
-q <- q + scale_x_continuous("Age at first consultation",breaks=seq(0,100,2))
+q <- q + facet_wrap(~category)
+q <- q + scale_x_continuous("Age at first consultation",breaks=seq(0,100,4))
 q <- q + scale_y_continuous("Years waiting until first F64.8/9 diagnosis",breaks=seq(0,20,2))
-q <- q + labs(title="People who initially had a F64.0 diagnosis and subsequently F64.8/9")
+#q <- q + labs(title="People who initially had a F64.8/9 diagnosis and subsequently F64.0")
 SaveA4(q,
-       file.path(FOLDERS$results_today,"descriptives","time_from_F64_0_until_F64_89.png"),
-       landscape=F,
-       scalev=0.5)
+       file.path(FOLDERS$results_today,"descriptives","time_until_first_F64_89.png"),
+       landscape=T,
+       scalev=1)
 
-q <- ggplot(toPlot[firstF64_89>0 & firstF64_0==0],aes(x=firstAgeCat,y=firstF64_89/365.25))
-q <- q + geom_boxplot()
-q <- q + scale_x_discrete("Age at first consultation")
-q <- q + scale_y_continuous("Years waiting until first F64.8/9 diagnosis",breaks=seq(0,20,2))
-q <- q + labs(title="People who initially had a F64.0 diagnosis and subsequently F64.8/9")
-q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5))
-SaveA4(q,
-       file.path(FOLDERS$results_today,"descriptives","time_from_F64_0_until_F64_89_boxplot.png"),
-       landscape=F,
-       scalev=0.5)
 
 x <- d[,.(
   numF64_089=sum(isF64_089),
   numF64_0=sum(isF64_0),
   numF64_89=sum(isF64_89),
-  firstF64_0=mean(firstF64_0),
-  firstF64_89=mean(firstF64_89)
-),by=.(LopNr,firstAgeCat)]
+  daysFirst_F64_0=mean(daysFirst_F64_0),
+  daysFirst_F64_89=mean(daysFirst_F64_89)
+),by=.(LopNr,ageFirstCat,category,yearFirst)]
 
-tab <- t(x[,.(
+tab <- x[,.(
   N=.N,
   `Mean num of F64.0/8/9 diagnoses`=round(mean(numF64_089),1),
   `Mean num of F64.0 diagnoses`=round(mean(numF64_0),1),
   `Mean num of F64.8/9 diagnoses`=round(mean(numF64_89),1),
-  `Proportion diagnosed with only F64.0`=round(100*mean(!is.na(firstF64_0) & is.na(firstF64_89))),
-  `Proportion diagnosed with only F64.8/9`=round(100*mean(is.na(firstF64_0) & !is.na(firstF64_89))),
-  `Proportion diagnosed with both F64.0 and F64.8/9`=round(100*mean(!is.na(firstF64_0) & !is.na(firstF64_89))),
-  `For people diagnosed first with F64.8/9, mean days spent at F64.8/9 before F64.0`=round(mean(firstF64_0[firstF64_89==0],na.rm=T))
-),keyby=.(firstAgeCat)])
-
-tab <- as.data.frame(tab)
-tab$var <- row.names(tab)
+  `Percentage with 2 or more F64.0 diagnoses`=round(100*mean(numF64_0>=2)),
+  `Percentage with 3 or more F64.0 diagnoses`=round(100*mean(numF64_0>=3)),
+  `Percentage with 2 or more F64.8/9 diagnoses`=round(100*mean(numF64_89>=2)),
+  `Percentage with 3 or more F64.8/9 diagnoses`=round(100*mean(numF64_89>=3)),
+  `Percentage with 2 or more F64.0/8/9 diagnoses`=round(100*mean(numF64_089>=2)),
+  `Percentage with 3 or more F64.0/8/9 diagnoses`=round(100*mean(numF64_089>=3)),
+  `Percentage diagnosed with only F64.0`=round(100*mean(!is.na(daysFirst_F64_0) & is.na(daysFirst_F64_89))),
+  `Percentage diagnosed with only F64.8/9`=round(100*mean(is.na(daysFirst_F64_0) & !is.na(daysFirst_F64_89))),
+  `Percentage diagnosed with both F64.0 and F64.8/9`=round(100*mean(!is.na(daysFirst_F64_0) & !is.na(daysFirst_F64_89))),
+  `For people diagnosed first with F64.8/9, mean days spent at F64.8/9 before F64.0`=round(mean(daysFirst_F64_0[daysFirst_F64_89==0],na.rm=T))
+),keyby=.(category)]
 
 openxlsx::write.xlsx(tab, file=
-                       file.path(FOLDERS$results_today,"descriptives","descriptives.xlsx"))
+                       file.path(FOLDERS$results_today,"descriptives","categories.xlsx"))
+
+tab <- x[,.(
+  N=.N,
+  `Mean num of F64.0/8/9 diagnoses`=round(mean(numF64_089),1),
+  `Mean num of F64.0 diagnoses`=round(mean(numF64_0),1),
+  `Mean num of F64.8/9 diagnoses`=round(mean(numF64_89),1),
+  `Percentage with 2 or more F64.0 diagnoses`=round(100*mean(numF64_0>=2)),
+  `Percentage with 3 or more F64.0 diagnoses`=round(100*mean(numF64_0>=3)),
+  `Percentage with 2 or more F64.8/9 diagnoses`=round(100*mean(numF64_89>=2)),
+  `Percentage with 3 or more F64.8/9 diagnoses`=round(100*mean(numF64_89>=3)),
+  `Percentage diagnosed with only F64.0`=round(100*mean(!is.na(daysFirst_F64_0) & is.na(daysFirst_F64_89))),
+  `Percentage diagnosed with only F64.8/9`=round(100*mean(is.na(daysFirst_F64_0) & !is.na(daysFirst_F64_89))),
+  `Percentage diagnosed with both F64.0 and F64.8/9`=round(100*mean(!is.na(daysFirst_F64_0) & !is.na(daysFirst_F64_89))),
+  `For people diagnosed first with F64.8/9, mean days spent at F64.8/9 before F64.0`=round(mean(daysFirst_F64_0[daysFirst_F64_89==0],na.rm=T))
+),keyby=.(yearFirst,category)]
+
+openxlsx::write.xlsx(tab, file=
+                       file.path(FOLDERS$results_today,"descriptives","categories_by_year.xlsx"))
 
 xtabs(~patients$identF64)
 patients[identF64==T]
