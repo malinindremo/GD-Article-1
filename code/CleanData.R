@@ -157,19 +157,22 @@ CleanData <- function(){
   patients[,age:=as.numeric(difftime(INDATUM,dob,units="days"))/365.25,by=LopNr]
   patients[,dob:=NULL]
   patients[,dateFirst:=min(INDATUM),by=LopNr]
-  patients[,days:=as.numeric(difftime(INDATUM,dateFirst,units="days")),by=LopNr]
+  patients[isF64_089==TRUE,days:=as.numeric(difftime(INDATUM,dateFirst,units="days")),by=LopNr]
   
   patients <- patients[,.(
-    ageFirst=min(age[isF64_089==TRUE]),
+    ageFirst_F64_089=min(age[isF64_089==TRUE]),
     ageFirst_F64_0=min(age[isF64_0==T]),
     ageFirst_F64_89=min(age[isF64_89==T]),
     ageFirst_Surgery=min(age[isSurgical==T]),
-    dateFirst=min(INDATUM[isF64_089==TRUE]),
-    daysFirst_F64_0=min(days[isF64_0==T]),
-    daysFirst_F64_89=min(days[isF64_89==T]),
-    daysFirst_Surgery=min(days[isSurgical==T]),
-    daysLast_F64_0=max(days[isF64_0==T]),
-    daysLast_F64_89=max(days[isF64_89==T]),
+    
+    dateFirst_F64_089=min(INDATUM[isF64_089==TRUE]),
+    dateFirst_F64_0=min(INDATUM[isF64_0==T]),
+    dateFirst_F64_89=min(INDATUM[isF64_89==T]),
+    dateFirst_Surgery=min(INDATUM[isSurgical==T]),
+    
+    dateLast_F64_0=max(INDATUM[isF64_0==T]),
+    dateLast_F64_89=max(INDATUM[isF64_89==T]),
+    
     hadTranssexual_ICD_89=as.logical(max(isTranssexual_ICD_89))
   ), by=.(
     LopNr
@@ -177,8 +180,8 @@ CleanData <- function(){
   for(i in names(patients)){
     patients[is.infinite(get(i)),(i):=NA]
   }
-  patients[,yearFirst:=RAWmisc::YearN(dateFirst),by=LopNr]
-  patients[,ageFirstCat:=cut(ageFirst,breaks=c(0,12,15,20,30,100))]
+  patients[,yearFirst_F64_089:=RAWmisc::YearN(dateFirst_F64_089),by=LopNr]
+  #patients[,ageFirstCat:=cut(ageFirst,breaks=c(0,12,15,20,30,100))]
   
   # merge sex/hormones/dob with diagnoses/surgeries
   nrow(patients)
@@ -189,17 +192,26 @@ CleanData <- function(){
   
   # create the categorioes
   d[,category:="No diagnosis"]
-  d[is.na(daysFirst_F64_0) & !is.na(daysFirst_F64_89),category:="Only F64.8/9"]
-  d[!is.na(daysFirst_F64_0) & is.na(daysFirst_F64_89),category:="Only F64.0"]
-  d[daysFirst_F64_0==0 & daysFirst_F64_89==0,category:="F64.0 and F64.8/9 at first consult"]
-  d[daysLast_F64_0==daysLast_F64_89,category:="F64.0 and F64.8/9 at last consult"]
-  d[daysFirst_F64_0==0 & daysFirst_F64_89>0 & daysLast_F64_0>daysLast_F64_89,category:="F64.0 -> F64.8/9 -> F64.0"]
-  d[daysFirst_F64_0==0 & daysFirst_F64_89>0 & daysLast_F64_0<daysLast_F64_89,category:="F64.0 -> F64.8/9"]
-  d[daysFirst_F64_0>0 & daysFirst_F64_89==0 & daysLast_F64_89>daysLast_F64_0,category:="F64.8/9 -> F64.0 -> F64.8/9"]
-  d[daysFirst_F64_0>0 & daysFirst_F64_89==0 & daysLast_F64_89<daysLast_F64_0,category:="F64.8/9 -> F64.0"]
+  d[is.na(dateFirst_F64_0) & !is.na(dateFirst_F64_89),category:="Only F64.8/9"]
+  d[!is.na(dateFirst_F64_0) & is.na(dateFirst_F64_89),category:="Only F64.0"]
+  d[dateFirst_F64_0==dateFirst_F64_089 & dateFirst_F64_89==dateFirst_F64_089,
+    category:="F64.0 and F64.8/9 at first consult"]
+  d[dateLast_F64_0==dateLast_F64_89,
+    category:="F64.0 and F64.8/9 at last consult"]
+  d[dateFirst_F64_0==dateFirst_F64_089 & dateFirst_F64_89>dateFirst_F64_089 & dateLast_F64_0>dateLast_F64_89,
+    category:="F64.0 -> F64.8/9 -> F64.0"]
+  d[dateFirst_F64_0==dateFirst_F64_089 & dateFirst_F64_89>dateFirst_F64_089 & dateLast_F64_0<dateLast_F64_89,
+    category:="F64.0 -> F64.8/9"]
+  d[dateFirst_F64_0>dateFirst_F64_089 & dateFirst_F64_89==dateFirst_F64_089 & dateLast_F64_89>dateLast_F64_0,
+    category:="F64.8/9 -> F64.0 -> F64.8/9"]
+  d[dateFirst_F64_0>dateFirst_F64_089 & dateFirst_F64_89==dateFirst_F64_089 & dateLast_F64_89<dateLast_F64_0,
+    category:="F64.8/9 -> F64.0"]
+  
   d[is.na(category)]
   xtabs(~d$category,addNA=T)
   
+  # fixing hadTranssexual_ICD_89
+  d[is.na(hadTranssexual_ICD_89), hadTranssexual_ICD_89:=FALSE]
   
   
   return(d)
