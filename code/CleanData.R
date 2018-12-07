@@ -180,7 +180,6 @@ CleanData <- function(){
   for(i in names(patients)){
     patients[is.infinite(get(i)),(i):=NA]
   }
-  patients[,yearFirst_F64_089:=RAWmisc::YearN(dateFirst_F64_089),by=LopNr]
   #patients[,ageFirstCat:=cut(ageFirst,breaks=c(0,12,15,20,30,100))]
   
   # merge sex/hormones/dob with diagnoses/surgeries
