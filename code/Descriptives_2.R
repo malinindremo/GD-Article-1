@@ -72,15 +72,6 @@ Descriptives_2 <- function(d){
          landscape=T,
          scalev=1)
   
-  
-  x <- d[,.(
-    numF64_089=sum(isF64_089),
-    numF64_0=sum(isF64_0),
-    numF64_89=sum(isF64_89),
-    daysFirst_F64_0=mean(daysFirst_F64_0),
-    daysFirst_F64_89=mean(daysFirst_F64_89)
-  ),by=.(LopNr,ageFirstCat,category,yearFirst)]
-  
   tab <- d[,.(
     N=.N,
     `Mean num of F64.0/8/9 diagnoses`=round(mean(numF64_089),1),
