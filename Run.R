@@ -49,13 +49,11 @@ library(ggplot2)
 
 d <- CleanData()
 
-d[,incidentYear:=as.numeric(format.Date(dateFirst_F64_089, "%G")),by=LopNr]
-
 agg <- d[category!="No diagnosis" & !is.na(incidentYear),
   .(
     N=.N
   ),keyby=.(
-    incidentYear
+    yearFirst_F64_089
   )]
 
 pop <- data.table(readxl::read_excel(file.path(FOLDERS$data,"Other","be0101tab9utveng2017.xlsx"),skip=2))
@@ -63,7 +61,7 @@ pop
 
 #a <- 
 
-#Descriptives_1(d)
+Descriptives_2(d)
 
 
 

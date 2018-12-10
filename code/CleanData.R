@@ -173,7 +173,11 @@ CleanData <- function(){
     dateLast_F64_0=max(INDATUM[isF64_0==T]),
     dateLast_F64_89=max(INDATUM[isF64_89==T]),
     
-    hadTranssexual_ICD_89=as.logical(max(isTranssexual_ICD_89))
+    hadTranssexual_ICD_89=as.logical(max(isTranssexual_ICD_89)),
+    
+    numF64_089=sum(isF64_089),
+    numF64_0=sum(isF64_0),
+    numF64_89=sum(isF64_89)
   ), by=.(
     LopNr
   )]
@@ -211,6 +215,12 @@ CleanData <- function(){
   
   # fixing hadTranssexual_ICD_89
   d[is.na(hadTranssexual_ICD_89), hadTranssexual_ICD_89:=FALSE]
+  
+  # new variables
+  d[,yearFirst_F64_089:=as.numeric(format.Date(dateFirst_F64_089, "%G"))]
+  d[,daysFirst_F64_0:=as.numeric(difftime(dateFirst_F64_0,dateFirst_F64_089,units="days"))]
+  d[,daysFirst_F64_89:=as.numeric(difftime(dateFirst_F64_89,dateFirst_F64_089,units="days"))]
+  
   
   
   return(d)
