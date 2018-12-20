@@ -38,6 +38,8 @@ FOLDERS$results_today <- file.path(FOLDERS$results,lubridate::today())
 suppressWarnings({
   dir.create(FOLDERS$results_today)
   dir.create(file.path(FOLDERS$results_today,"descriptives"))
+  dir.create(file.path(FOLDERS$results_today,"validation"))
+  dir.create(file.path(FOLDERS$results_today,"analyses"))
 })
 
 ################
@@ -48,6 +50,11 @@ library(data.table)
 library(ggplot2)
 
 d <- CleanData()
+
+Descriptives_2(d)
+Validate_1(d)
+NumbersByYear_1(d)
+
 
 agg <- d[category!="No diagnosis" & !is.na(incidentYear),
   .(
@@ -61,7 +68,7 @@ pop
 
 #a <- 
 
-Descriptives_2(d)
+
 
 
 
