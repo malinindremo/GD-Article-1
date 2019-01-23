@@ -13,15 +13,18 @@
 FOLDERS_SUGGEST <- list()
 FOLDERS_SUGGEST$code <- c(
   file.path("/git","GD-Article-1"),
-  file.path("/Users","malin976","Documents","GitHub","GD-Article-1")
+  file.path("/Users","malin976","Documents","GitHub","GD-Article-1"),
+  file.path("/Users","Georgios","Documents","Research-Malin","GD-Article-1")
 )
 FOLDERS_SUGGEST$data <- c(
   file.path("/Volumes","crypt_data","org","data_raw","code_minor","2018","GD-Article-1"),
-  file.path("/Users","malin976","Documents","Article-1-data")
+  file.path("/Users","malin976","Documents","Article-1-data"),
+  file.path("/Volumes","KonsdysforiregisterKaramanis")
 )
 FOLDERS_SUGGEST$results <- c(
   file.path("/Filr", "Shared with Me", "Gender dysphoria -shared folder", "results"),
-  file.path("/Users","malin976","Filr","Mina filer","Gender dysphoria -shared folder", "results")
+  file.path("/Users","malin976","Filr","Mina filer","Gender dysphoria -shared folder", "results"),
+  file.path("/Users","Georgios","Filr","Shared with Me","Malin-results")
 )
 
 FOLDERS <- list()
