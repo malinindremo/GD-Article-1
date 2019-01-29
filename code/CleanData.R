@@ -8,6 +8,7 @@ CleanData <- function(){
   demografi <- data.table(haven::read_sas(file.path(FOLDERS$data,"SCB/demografi.sas7bdat")))
   sex <- data.table(haven::read_sas(file.path(FOLDERS$data,"SCB/kon.sas7bdat")))
   sex[,isBornMale:=kon==1]
+  sex[,bornSex:=ifelse(isBornMale,"Born Male","Born Female")]
   sex[,kon:=NULL]
  
   ## sex change 
@@ -18,6 +19,7 @@ CleanData <- function(){
     stringr::str_sub(konsbyte_datum,5,6),
     stringr::str_sub(konsbyte_datum,7,8)
   ))]
+  sexChange[,yearSexChange:=YearN(dateSexChange)]
   sexChange[,konsbyte_datum:=NULL]
   
   ## DOB
@@ -266,6 +268,22 @@ CleanData <- function(){
   d[,yearFirst_F64_089:=as.numeric(format.Date(dateFirst_F64_089, "%G"))]
   d[,daysFirst_F64_0:=as.numeric(difftime(dateFirst_F64_0,dateFirst_F64_089,units="days"))]
   d[,daysFirst_F64_89:=as.numeric(difftime(dateFirst_F64_89,dateFirst_F64_089,units="days"))]
+  
+  # analysis cats
+  # F64_089
+  # until 2013
+  d[,analysisCat_x:=as.character(NA)]
+  d[numF64_089>=3 & 
+      dateFirst_F64_089>="2001-01-01" & 
+      dateFirst_F64_089<="2014-12-31",
+    analysisCat_x:="numF64_089>=3, first diag: [2001-01-01, 2014-12-31]"]
+  d[hadTranssexual_ICD_89==TRUE,analysisCat_x:=NA]
+  d[dateSexChange<"2001-01-01",analysisCat_x:=NA]
+  d[!is.na(analysisCat_x),analysisYear_x:=YearN(dateFirst_F64_089)]
+  d[!is.na(analysisCat_x),analysisAge_x:=ageFirst_F64_089]
+  d[,analysisAgeCat_x:=cut(analysisAge_x,breaks = c(0,18,30,50,200),include.lowest = T)]
+  d$analysisAgeCat_x
+  #d[,analysisAgeCat_x:=as.character(analysisAgeCat_x)]
   
   # analysis cats
   # F64_089

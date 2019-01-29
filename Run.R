@@ -53,23 +53,244 @@ library(data.table)
 library(ggplot2)
 
 d <- CleanData()
+dx <- d[!is.na(analysisCat_x)]
+
+pop <- data.table(readxl::read_excel(file.path(FOLDERS$code,"structural_data","pop.xlsx"),skip=0))
+pop <- melt.data.table(pop,id.vars=c("year","age"))
+setnames(pop,c("year","age","sex","pop"))
+pop[,year:=as.numeric(year)]
+pop[,age:=stringr::str_extract(age,"[0-9]+")]
+pop[,ageCat:=cut(as.numeric(age),breaks = c(0,18,30,50,200),include.lowest = T)]
+pop[,ageCat:=as.character(ageCat)]
+pop[,isBornMale:=sex=="men"]
+pop[,bornSex:=ifelse(isBornMale,"Born Male","Born Female")]
+
+pop0 <- pop[,.(
+  pop=sum(pop)
+),keyby=.(
+  year,ageCat,bornSex
+)]
+
+pop1 <- pop[,.(
+  pop=sum(pop)
+),keyby=.(
+  year,bornSex
+)]
+pop1[,ageCat:="All"]
+
+pop2 <- pop[,.(
+  pop=sum(pop)
+),keyby=.(
+  year,ageCat
+)]
+pop2[,bornSex:="All"]
+
+pop3 <- pop[,.(
+  pop=sum(pop)
+),keyby=.(
+  year
+)]
+pop3[,ageCat:="All"]
+pop3[,bornSex:="All"]
+
+pop <- rbind(pop0,pop1,pop2,pop3)
 
 Descriptives_2(d)
 Validate_1(d)
 NumbersByYear_1(d)
 
 
-agg <- d[category!="No diagnosis" & !is.na(incidentYear),
+# plot 1
+# number of diagnoses
+# all ages, by born sex
+agg <- dx[,
   .(
     N=.N
   ),keyby=.(
-    yearFirst_F64_089
-  )]
+    bornSex,
+    analysisYear_x
+  )][CJ(unique(dx$bornSex),
+        unique(dx$analysisYear_x))
+     ,allow.cartesian= TRUE]
+agg[is.na(N), N:=0]
 
-pop <- data.table(readxl::read_excel(file.path(FOLDERS$data,"Other","be0101tab9utveng2017.xlsx"),skip=2))
-pop
+agg <- merge(agg,pop[ageCat=="All"],
+             by.x=c("analysisYear_x","bornSex"),
+             by.y=c("year","bornSex"))
+openxlsx::write.xlsx(agg, file.path(FOLDERS$results_today,"analyses","F64_089_ge_3_per_year_by_born_sex.xlsx"))
 
-#a <- 
+q <- ggplot(agg,aes(x=analysisYear_x,y=N,colour=bornSex))
+q <- q + geom_line()
+q <- q + geom_point()
+q <- q + scale_color_brewer("",palette="Set1")
+q <- q + scale_x_continuous("Year of first F64.0/8/9 diagnosis",
+                            breaks=seq(2001,2020,2))
+q <- q + scale_y_continuous("Number of people")
+q <- q + theme_gray(20)
+q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+q
+SaveA4(q, file.path(FOLDERS$results_today,"analyses","F64_089_ge_3_per_year_by_born_sex.png"))
+
+q <- ggplot(agg,aes(x=analysisYear_x,y=N/pop*10000,colour=bornSex))
+q <- q + geom_line()
+q <- q + geom_point()
+q <- q + scale_color_brewer("",palette="Set1")
+q <- q + scale_x_continuous("Year of first F64.0/8/9 diagnosis",
+                            breaks=seq(2001,2020,2))
+q <- q + scale_y_continuous("Number of people/10,000 population")
+q <- q + theme_gray(20)
+q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+q
+SaveA4(q, file.path(FOLDERS$results_today,"analyses","F64_089_ge_3_per_year_by_born_sex_incidence.png"))
+
+# plot 2
+# number of diagnoses
+# age categories, by born sex
+agg <- dx[,
+          .(
+            N=.N
+          ),keyby=.(
+            bornSex,
+            analysisAgeCat_x,
+            analysisYear_x
+          )][CJ(unique(dx$bornSex),
+                unique(dx$analysisAgeCat_x),
+                unique(dx$analysisYear_x))
+             ,allow.cartesian= TRUE]
+agg[is.na(N), N:=0]
+
+agg <- merge(agg,pop,
+             by.x=c("analysisYear_x","bornSex","analysisAgeCat_x"),
+             by.y=c("year","bornSex","ageCat"))
+agg[,analysisAgeCat_x:=factor(analysisAgeCat_x,levels=c(
+  "[0,18]",
+  "(18,30]",
+  "(30,50]",
+  "(50,200]"
+))]
+openxlsx::write.xlsx(agg, file.path(FOLDERS$results_today,"analyses","F64_089_ge_3_per_year_by_born_sex_age.xlsx"))
+
+q <- ggplot(agg,aes(x=analysisYear_x,y=N,colour=analysisAgeCat_x))
+q <- q + geom_line()
+q <- q + geom_point()
+q <- q + facet_grid(.~bornSex)
+q <- q + scale_color_brewer("Age at first\ndiagnosis",palette="Set1")
+q <- q + scale_x_continuous("Year of first F64.0/8/9 diagnosis",
+                            breaks=seq(2001,2020,2))
+q <- q + scale_y_continuous("Number of people")
+q <- q + theme_gray(20)
+q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+q
+SaveA4(q, file.path(FOLDERS$results_today,"analyses","F64_089_ge_3_per_year_by_born_sex_age.png"))
+
+q <- ggplot(agg,aes(x=analysisYear_x,y=N/pop*10000,colour=analysisAgeCat_x))
+q <- q + geom_line()
+q <- q + geom_point()
+q <- q + facet_grid(.~bornSex)
+q <- q + scale_color_brewer("Age at first\nF64.0/8/9 diagnosis",palette="Set1")
+q <- q + scale_x_continuous("Year of first F64.0/8/9 diagnosis",
+                            breaks=seq(2001,2020,2))
+q <- q + scale_y_continuous("Number of people/10,000 population")
+q <- q + theme_gray(20)
+q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+q
+SaveA4(q, file.path(FOLDERS$results_today,"analyses","F64_089_ge_3_per_year_by_born_sex_age_incidence.png"))
+
+# plot 3
+# number of sex changes
+# all ages, by born sex
+agg <- dx[,
+          .(
+            N=.N
+          ),keyby=.(
+            bornSex,
+            yearSexChange
+          )][CJ(unique(dx$bornSex),
+                2001:2015)
+             ,allow.cartesian= TRUE]
+agg[is.na(N), N:=0]
+
+agg <- merge(agg,pop[ageCat=="All"],
+             by.x=c("yearSexChange","bornSex"),
+             by.y=c("year","bornSex"))
+openxlsx::write.xlsx(agg, file.path(FOLDERS$results_today,"analyses","F64_089_ge_3_sex_change_per_year_by_born_sex.xlsx"))
+
+q <- ggplot(agg,aes(x=yearSexChange,y=N,colour=bornSex))
+q <- q + geom_line()
+q <- q + geom_point()
+q <- q + scale_color_brewer("",palette="Set1")
+q <- q + scale_x_continuous("Year of sex change",
+                            breaks=seq(2001,2020,2))
+q <- q + scale_y_continuous("Number of people")
+q <- q + theme_gray(20)
+q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+q
+SaveA4(q, file.path(FOLDERS$results_today,"analyses","F64_089_ge_3_sex_change_per_year_by_born_sex.png"))
+
+q <- ggplot(agg,aes(x=yearSexChange,y=N/pop*10000,colour=bornSex))
+q <- q + geom_line()
+q <- q + geom_point()
+q <- q + scale_color_brewer("",palette="Set1")
+q <- q + scale_x_continuous("Year of sex change",
+                            breaks=seq(2001,2020,2))
+q <- q + scale_y_continuous("Number of people/10,000 population")
+q <- q + theme_gray(20)
+q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+q
+SaveA4(q, file.path(FOLDERS$results_today,"analyses","F64_089_ge_3_sex_change_per_year_by_born_sex_incidence.png"))
+
+# plot 4
+# number of sex changes
+# age categories, by born sex
+agg <- dx[,
+          .(
+            N=.N
+          ),keyby=.(
+            bornSex,
+            analysisAgeCat_x,
+            yearSexChange
+          )][CJ(unique(dx$bornSex),
+                unique(dx$analysisAgeCat_x),
+                2001:2015)
+             ,allow.cartesian= TRUE]
+agg[is.na(N), N:=0]
+
+agg <- merge(agg,pop,
+             by.x=c("yearSexChange","bornSex","analysisAgeCat_x"),
+             by.y=c("year","bornSex","ageCat"))
+agg[,analysisAgeCat_x:=factor(analysisAgeCat_x,levels=c(
+  "[0,18]",
+  "(18,30]",
+  "(30,50]",
+  "(50,200]"
+))]
+openxlsx::write.xlsx(agg, file.path(FOLDERS$results_today,"analyses","F64_089_ge_3_sex_change_per_year_by_born_sex_age.xlsx"))
+
+q <- ggplot(agg,aes(x=yearSexChange,y=N,colour=analysisAgeCat_x))
+q <- q + geom_line()
+q <- q + geom_point()
+q <- q + facet_grid(.~bornSex)
+q <- q + scale_color_brewer("Age at first\nF64.0/8/9 diagnosis",palette="Set1")
+q <- q + scale_x_continuous("Year of sex change",
+                            breaks=seq(2001,2020,2))
+q <- q + scale_y_continuous("Number of people")
+q <- q + theme_gray(20)
+q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+q
+SaveA4(q, file.path(FOLDERS$results_today,"analyses","F64_089_ge_3_sex_change_per_year_by_born_sex_age.png"))
+
+q <- ggplot(agg,aes(x=yearSexChange,y=N/pop*10000,colour=analysisAgeCat_x))
+q <- q + geom_line()
+q <- q + geom_point()
+q <- q + facet_grid(.~bornSex)
+q <- q + scale_color_brewer("Age at first\nF64.0/8/9 diagnosis",palette="Set1")
+q <- q + scale_x_continuous("Year of sex change",
+                            breaks=seq(2001,2020,2))
+q <- q + scale_y_continuous("Number of people/10,000 population")
+q <- q + theme_gray(20)
+q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+q
+SaveA4(q, file.path(FOLDERS$results_today,"analyses","F64_089_ge_3_sex_change_per_year_by_born_sex_age_incidence.png"))
 
 
 
