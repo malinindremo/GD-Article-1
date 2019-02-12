@@ -18,9 +18,14 @@ Validate_1_int <- function(d,num){
 
 Validate_1 <- function(d){
   
-  res <- vector("list", length=sum(stringr::str_detect(names(d),"^analysisCat_")))
+  res <- vector("list", length=sum(stringr::str_detect(names(d),"^analysisCat_[0-9]+")))
   for(i in seq_along(res)){
     res[[i]] <- Validate_1_int(d,num=i)
+    x <- res[[i]][1,]
+    for(j in names(x)){
+      x[,(j):=NA]
+    }
+    res[[i]] <- rbind(res[[i]],x)
   }
   
   res <- rbindlist(res)

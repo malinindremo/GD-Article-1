@@ -24,7 +24,8 @@ FOLDERS_SUGGEST$data <- c(
 FOLDERS_SUGGEST$results <- c(
   file.path("/Filr", "Shared with Me", "Gender dysphoria -shared folder", "results"),
   file.path("/Users","malin976","Filr","Mina filer","Gender dysphoria -shared folder", "results"),
-  file.path("/Users","Georgios","Filr","Shared with Me","Malin-results")
+  file.path("/Users","Georgios","Filr","Shared with Me","Malin-results"),
+  file.path("/git","x")
 )
 
 FOLDERS <- list()
@@ -41,6 +42,7 @@ FOLDERS$results_today <- file.path(FOLDERS$results,lubridate::today())
 suppressWarnings({
   dir.create(FOLDERS$results_today)
   dir.create(file.path(FOLDERS$results_today,"descriptives"))
+  dir.create(file.path(FOLDERS$results_today,"validation"))
   dir.create(file.path(FOLDERS$results_today,"validation"))
   dir.create(file.path(FOLDERS$results_today,"analyses"))
 })
@@ -98,6 +100,8 @@ pop <- rbind(pop0,pop1,pop2,pop3)
 Descriptives_2(d)
 Validate_1(d)
 NumbersByYear_1(d)
+
+Validate_2(d)
 
 
 # plot 1
