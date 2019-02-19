@@ -67,9 +67,9 @@ Analyses_1 <- function(dz, pop){
               bornSex,
               analysisAgeCat_z,
               analysisYear_z
-            )][CJ(unique(dx$bornSex),
-                  unique(dx$analysisAgeCat_z),
-                  unique(dx$analysisYear_z))
+            )][CJ(unique(dz$bornSex),
+                  unique(dz$analysisAgeCat_z),
+                  unique(dz$analysisYear_z))
                ,allow.cartesian= TRUE]
   agg[is.na(N), N:=0]
   
