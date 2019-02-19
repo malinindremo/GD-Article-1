@@ -1,5 +1,10 @@
 YearN <- function(x) as.numeric(format.Date(x, "%G"))
 
+OverwriteWithEarlist <- function(d,rows,resVarDate,resVarCat,valVarDate,valCat){
+  d[rows,(resVarCat):=valCat]
+  d[rows,(resVarDate):=get(valVarDate)]
+}
+
 CleanData <- function(){
   
   ov <- data.table(haven::read_sas(file.path(FOLDERS$data,"Sos/ov.sas7bdat")))
@@ -58,11 +63,18 @@ CleanData <- function(){
   nrow(sex)
   rx <- merge(sex,rx,by.x="LopNr",by.y="lopnr",all.x=T)
   nrow(rx)
-  #rx <- merge(d,demografi,by="LopNr")
-  #nrow(d)
+  # merge in demography
+  rx <- merge(rx,demografi[,c("LopNr","dob")],by="LopNr")
+  nrow(rx)
+  rx[,age:=as.numeric(difftime(FDATUM,dob,units="days"))/365.25]
+  rx[,dob:=NULL]
  
+  # remove hormones that are going the wrong way with regards to gender
   rx[isBornMale==TRUE,isHormoneFTM:=FALSE]
   rx[isBornMale==FALSE,isHormoneMTF:=FALSE]
+  # puberty blockers for 19+ year olds are discarded
+  rx[isHormonePubBlock==TRUE & age>=19,isHormonePubBlock:=FALSE]
+  rx[,age:=NULL]
   
   rx[,isHormone:=isHormoneMTF | isHormoneFTM | isHormonePubBlock]
   
@@ -104,7 +116,7 @@ CleanData <- function(){
     patients[get(i)=="302,31",isTranssexual_ICD_89:=TRUE]
     patients[get(i)=="302,99",isTranssexual_ICD_89:=TRUE]
     patients[get(i)=="302X",isTranssexual_ICD_89:=TRUE]
-    #patients[stringr::str_detect(get(i),"^302"), isTranssexual_ICD_89:=TRUE]
+    
     patients[stringr::str_detect(get(i),"^F640"), isCodeUsedWithSurgery:=TRUE]
     patients[stringr::str_detect(get(i),"^F648"), isCodeUsedWithSurgery:=TRUE]
     patients[stringr::str_detect(get(i),"^F649"), isCodeUsedWithSurgery:=TRUE]
@@ -173,14 +185,7 @@ CleanData <- function(){
     patients[INDATUM > "2016-12-31",(newVar_2005_07_to_2016_12):=FALSE]
     
   }
-  # 
-  # for(i in c(
-  #   "ZZS40",
-  #   "LEE20"
-  # )){
-  #   patients[stringr::str_detect(OP,i) & isCodeUsedWithSurgery==TRUE,isSurgical:=TRUE]
-  # }
-  # 
+
   # merge diagnoses/surgeries with DOB
   nrow(patients)
   patients <- merge(patients,demografi[,c("LopNr","dob")],by="LopNr")
@@ -209,7 +214,11 @@ CleanData <- function(){
     numF64_89=sum(isF64_89),
     
     isSurgicalMasectomy_2005_07_to_2016_12=as.logical(max(isSurgicalMasectomy_2005_07_to_2016_12)),
-    dateFirst_SurgicalMasectomy=min(INDATUM[isSurgicalMasectomy==TRUE])
+    dateFirst_SurgicalMasectomy=min(INDATUM[isSurgicalMasectomy==TRUE]),
+    
+    dateFirst_SurgicalReconstVag=min(INDATUM[isSurgicalReconstVag==TRUE]),
+    dateFirst_SurgicalPenisAmp=min(INDATUM[isSurgicalPenisAmp==TRUE]),
+    dateFirst_SurgicalPenisTestProsth=min(INDATUM[isSurgicalPenisTestProsth==TRUE])
   ), by=.(
     LopNr
   )]
@@ -334,6 +343,113 @@ CleanData <- function(){
   
   d[,hormoneAndSurgicalMasectomyCat_y:=sprintf("%s/\n%s",hormoneCat_y,surgicalMasectomyCat_y)]
   xtabs(~d$hormoneAndSurgicalMasectomyCat_y)
+  
+  ####
+  # analysis cats
+  # F64_089
+  # until 2013
+  d[,analysisCat_z:=as.character(NA)]
+  d[,analysisDate_z:=as.Date("2100-01-01")]
+  
+  rows <- d$dateFirst_F64_089<d$analysisDate_z & 
+    d$numF64_089>=3 & 
+    d$dateFirst_F64_089>="2001-01-01" & 
+    d$dateFirst_F64_089<="2005-07-31"
+  OverwriteWithEarlist(
+    d=d,
+    rows=rows,
+    resVarDate="analysisDate_z",
+    resVarCat="analysisCat_z",
+    valVarDate="dateFirst_F64_089",
+    valCat="numF64_089>=3, first diag: [2001-01-01, 2005-07-31]")
+  
+  # hormones
+  rows <- d$dateFirstHormone<d$analysisDate_z & 
+    d$dateFirstHormone>="2001-01-01" & 
+    d$dateFirstHormone<="2016-12-31"
+  OverwriteWithEarlist(
+    d=d,
+    rows=rows,
+    resVarDate="analysisDate_z",
+    resVarCat="analysisCat_z",
+    valVarDate="dateFirstHormone",
+    valCat="hormones, first diag: [2001-01-01, 2016-12-31]")
+  
+  # masectomy
+  rows <- d$dateFirst_SurgicalMasectomy<d$analysisDate_z & 
+    d$dateFirst_SurgicalMasectomy>="2001-01-01" & 
+    d$dateFirst_SurgicalMasectomy<="2016-12-31"
+  OverwriteWithEarlist(
+    d=d,
+    rows=rows,
+    resVarDate="analysisDate_z",
+    resVarCat="analysisCat_z",
+    valVarDate="dateFirst_SurgicalMasectomy",
+    valCat="masectomy, first diag: [2001-01-01, 2016-12-31]")
+  
+  # penisamp
+  rows <- d$dateFirst_SurgicalPenisAmp<d$analysisDate_z & 
+    d$dateFirst_SurgicalPenisAmp>="2001-01-01" & 
+    d$dateFirst_SurgicalPenisAmp<="2016-12-31"
+  OverwriteWithEarlist(
+    d=d,
+    rows=rows,
+    resVarDate="analysisDate_z",
+    resVarCat="analysisCat_z",
+    valVarDate="dateFirst_SurgicalPenisAmp",
+    valCat="penisamp, first diag: [2001-01-01, 2016-12-31]")
+  
+  # reconstvag
+  rows <- d$dateFirst_SurgicalReconstVag<d$analysisDate_z & 
+    d$dateFirst_SurgicalReconstVag>="2001-01-01" & 
+    d$dateFirst_SurgicalReconstVag<="2016-12-31"
+  OverwriteWithEarlist(
+    d=d,
+    rows=rows,
+    resVarDate="analysisDate_z",
+    resVarCat="analysisCat_z",
+    valVarDate="dateFirst_SurgicalReconstVag",
+    valCat="reconstvag, first diag: [2001-01-01, 2016-12-31]")
+  
+  # penistestprosth
+  rows <- d$dateFirst_SurgicalPenisTestProsth<d$analysisDate_z & 
+    d$dateFirst_SurgicalPenisTestProsth>="2001-01-01" & 
+    d$dateFirst_SurgicalPenisTestProsth<="2016-12-31"
+  OverwriteWithEarlist(
+    d=d,
+    rows=rows,
+    resVarDate="analysisDate_z",
+    resVarCat="analysisCat_z",
+    valVarDate="dateFirst_SurgicalPenisTestProsth",
+    valCat="penistestprosth, first diag: [2001-01-01, 2016-12-31]")
+  
+  d[hadTranssexual_ICD_89==TRUE,analysisCat_z:=NA]
+  d[dateSexChange<"2001-01-01",analysisCat_z:=NA]
+  d[is.na(analysisCat_z), analysisDate_z:=NA]
+  d[,analysisYear_z:=YearN(analysisDate_z)]
+  d[,analysisAge_z:=as.numeric(difftime(analysisDate_z,dob,units="days"))/365.25]
+  d[,analysisAgeCat_z:=cut(analysisAge_z,breaks = c(0,18,30,50,200),include.lowest = T)]
+  xtabs(~d$analysisCat_z+d$analysisYear_z)
+  xtabs(~d$analysisAgeCat_z)
+  #d[,analysisAgeCat_x:=as.character(analysisAgeCat_x)]
+  
+  d[,hormoneCat_y:=as.character(NA)]
+  d[!is.na(analysisCat_y),hormoneCat_y:="No hormones"]
+  d[!is.na(analysisCat_y) & dateFirstHormone<dateFirst_F64_089,hormoneCat_y:="Hormones before diag"]
+  d[!is.na(analysisCat_y) & dateFirstHormone>=dateFirst_F64_089,hormoneCat_y:="Hormones after diag"]
+  xtabs(~d$hormoneCat_y)
+  
+  d[,surgicalMasectomyCat_y:=as.character(NA)]
+  d[!is.na(analysisCat_y),surgicalMasectomyCat_y:="No masectomy"]
+  d[!is.na(analysisCat_y) & dateFirst_SurgicalMasectomy<dateFirst_F64_089,surgicalMasectomyCat_y:="Masectomy before diag"]
+  d[!is.na(analysisCat_y) & dateFirst_SurgicalMasectomy>=dateFirst_F64_089,surgicalMasectomyCat_y:="Masectomy after diag"]
+  xtabs(~d$surgicalMasectomyCat_y)
+  
+  d[,hormoneAndSurgicalMasectomyCat_y:=sprintf("%s/\n%s",hormoneCat_y,surgicalMasectomyCat_y)]
+  xtabs(~d$hormoneAndSurgicalMasectomyCat_y)
+  
+  
+  
   
   # analysis cats
   # F64_089

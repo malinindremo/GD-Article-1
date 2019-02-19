@@ -31,5 +31,5 @@ Validate_1 <- function(d){
   res <- rbindlist(res)
   
   openxlsx::write.xlsx(res, file=
-                         file.path(FOLDERS$results_today,"validation","Validate_1.xlsx"))
+                         file.path(FOLDERS$results_today,"validation_1","Validate_1.xlsx"))
 }
