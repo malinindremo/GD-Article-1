@@ -18,6 +18,9 @@ Validate_2_int <- function(d,num){
 
 Validate_2 <- function(d){
   
+  
+  xtabs(~d$analysisCat_y+d$analysisCat_1,addNA=T)
+  
   pd <- d[!is.na(analysisCat_y),.(
     N=.N
   ),keyby=.(

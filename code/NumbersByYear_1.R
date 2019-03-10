@@ -29,5 +29,5 @@ NumbersByYear_1 <- function(d){
   res <- rbindlist(res)
   
   openxlsx::write.xlsx(res, file=
-                         file.path(FOLDERS$results_today,"analyses","NumbersByYear.xlsx"))
+                         file.path(FOLDERS$results_today,"analyses_1","NumbersByYear.xlsx"))
 }

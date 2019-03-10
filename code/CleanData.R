@@ -89,6 +89,9 @@ CleanData <- function(){
     isHormone_2005_07_to_2016_12=as.logical(max(isHormone_2005_07_to_2016_12))
   ),by=.(LopNr)]
   nrow(rx)
+  for(i in names(rx)){
+    rx[is.infinite(get(i)),(i):=NA]
+  }
   
   # diagnoses and surgeries
   ov[,type:="outpatient"]
@@ -332,7 +335,7 @@ CleanData <- function(){
   d[,hormoneCat_y:=as.character(NA)]
   d[!is.na(analysisCat_y),hormoneCat_y:="No hormones"]
   d[!is.na(analysisCat_y) & dateFirstHormone<dateFirst_F64_089,hormoneCat_y:="Hormones before diag"]
-  d[!is.na(analysisCat_y) & dateFirstHormone>=dateFirst_F64_089,hormoneCat_y:="Hormones after diag"]
+  d[!is.na(analysisCat_y) & (dateFirstHormone>=dateFirst_F64_089) & !is.na(dateFirstHormone),hormoneCat_y:="Hormones after diag"]
   xtabs(~d$hormoneCat_y)
   
   d[,surgicalMasectomyCat_y:=as.character(NA)]
@@ -432,24 +435,6 @@ CleanData <- function(){
   xtabs(~d$analysisCat_z+d$analysisYear_z)
   xtabs(~d$analysisAgeCat_z)
   #d[,analysisAgeCat_x:=as.character(analysisAgeCat_x)]
-  
-  d[,hormoneCat_y:=as.character(NA)]
-  d[!is.na(analysisCat_y),hormoneCat_y:="No hormones"]
-  d[!is.na(analysisCat_y) & dateFirstHormone<dateFirst_F64_089,hormoneCat_y:="Hormones before diag"]
-  d[!is.na(analysisCat_y) & dateFirstHormone>=dateFirst_F64_089,hormoneCat_y:="Hormones after diag"]
-  xtabs(~d$hormoneCat_y)
-  
-  d[,surgicalMasectomyCat_y:=as.character(NA)]
-  d[!is.na(analysisCat_y),surgicalMasectomyCat_y:="No masectomy"]
-  d[!is.na(analysisCat_y) & dateFirst_SurgicalMasectomy<dateFirst_F64_089,surgicalMasectomyCat_y:="Masectomy before diag"]
-  d[!is.na(analysisCat_y) & dateFirst_SurgicalMasectomy>=dateFirst_F64_089,surgicalMasectomyCat_y:="Masectomy after diag"]
-  xtabs(~d$surgicalMasectomyCat_y)
-  
-  d[,hormoneAndSurgicalMasectomyCat_y:=sprintf("%s/\n%s",hormoneCat_y,surgicalMasectomyCat_y)]
-  xtabs(~d$hormoneAndSurgicalMasectomyCat_y)
-  
-  
-  
   
   # analysis cats
   # F64_089
