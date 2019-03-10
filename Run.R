@@ -49,8 +49,6 @@ LossOfPeopleTreatments(d,type = "diag")
 Validate_1(d, byvar="c_analysisCat_F64_089_ge4")
 Validate_1(d, byvar="c_analysisCat_F64_089_ge10")
 
-dz <- d[!is.na(analysisCat_z)]
-
 dz <- d[!is.na(c_analysisCat_treatments)]
 dz[,analysisCat_z:=c_analysisCat_treatments]
 dz[,analysisYear_z:=c_analysisYear_treatments]
