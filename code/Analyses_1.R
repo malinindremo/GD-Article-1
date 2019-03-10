@@ -1,4 +1,4 @@
-Analyses_1 <- function(dz, pop){
+Analyses_1 <- function(dz, pop, folder){
   agg <- dz[,
             .(
               N=.N
@@ -12,7 +12,7 @@ Analyses_1 <- function(dz, pop){
                ,allow.cartesian= TRUE]
   agg[is.na(N), N:=0]
   xlsx::write.xlsx(dcast.data.table(agg,bornSex+analysisCat_z~analysisYear_z),
-                   file.path(FOLDERS$results_today,"analyses_1","raw_numbers.xlsx"))
+                   fs::path(org::PROJ$SHARED_TODAY,folder,"raw_numbers.xlsx"))
   
   # plot 1
   # number of diagnoses
@@ -31,7 +31,7 @@ Analyses_1 <- function(dz, pop){
   agg <- merge(agg,pop[ageCat=="All"],
                by.x=c("analysisYear_z","bornSex"),
                by.y=c("year","bornSex"))
-  openxlsx::write.xlsx(agg, file.path(FOLDERS$results_today,"analyses_1","per_year_by_born_sex.xlsx"))
+  openxlsx::write.xlsx(agg, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex.xlsx"))
   
   q <- ggplot(agg,aes(x=analysisYear_z,y=N,colour=bornSex))
   q <- q + geom_line()
@@ -43,7 +43,7 @@ Analyses_1 <- function(dz, pop){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, file.path(FOLDERS$results_today,"analyses_1","per_year_by_born_sex.png"))
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex.png"))
   
   q <- ggplot(agg,aes(x=analysisYear_z,y=N/pop*10000,colour=bornSex))
   q <- q + geom_line()
@@ -55,7 +55,7 @@ Analyses_1 <- function(dz, pop){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, file.path(FOLDERS$results_today,"analyses_1","per_year_by_born_sex_incidence.png"))
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_incidence.png"))
   
   # plot 2
   # number of diagnoses
@@ -82,7 +82,7 @@ Analyses_1 <- function(dz, pop){
     "(30,50]",
     "(50,200]"
   ))]
-  openxlsx::write.xlsx(agg, file.path(FOLDERS$results_today,"analyses_1","per_year_by_born_sex_age.xlsx"))
+  openxlsx::write.xlsx(agg, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_age.xlsx"))
   
   q <- ggplot(agg,aes(x=analysisYear_z,y=N,colour=analysisAgeCat_z))
   q <- q + geom_line()
@@ -95,7 +95,7 @@ Analyses_1 <- function(dz, pop){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, file.path(FOLDERS$results_today,"analyses_1","per_year_by_born_sex_age.png"))
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_age.png"))
   
   q <- ggplot(agg,aes(x=analysisYear_z,y=N/pop*10000,colour=analysisAgeCat_z))
   q <- q + geom_line()
@@ -108,7 +108,7 @@ Analyses_1 <- function(dz, pop){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, file.path(FOLDERS$results_today,"analyses_1","per_year_by_born_sex_age_incidence.png"))
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_age_incidence.png"))
   
   q <- ggplot(agg[analysisAgeCat_z=="[0,18]"],aes(x=analysisYear_z,y=N))
   q <- q + geom_line()
@@ -121,7 +121,7 @@ Analyses_1 <- function(dz, pop){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, file.path(FOLDERS$results_today,"analyses_1","per_year_by_born_sex_0-18.png"))
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_0-18.png"))
   
   q <- ggplot(agg[analysisAgeCat_z=="[0,18]"],aes(x=analysisYear_z,y=N/pop*10000))
   q <- q + geom_line()
@@ -134,7 +134,7 @@ Analyses_1 <- function(dz, pop){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, file.path(FOLDERS$results_today,"analyses_1","per_year_by_born_sex_0-18_incidence.png"))
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_0-18_incidence.png"))
   
   # plot 3
   # number of sex changes
@@ -153,7 +153,7 @@ Analyses_1 <- function(dz, pop){
   agg <- merge(agg,pop[ageCat=="All"],
                by.x=c("yearSexChange","bornSex"),
                by.y=c("year","bornSex"))
-  openxlsx::write.xlsx(agg, file.path(FOLDERS$results_today,"analyses_1","sex_change_per_year_by_born_sex.xlsx"))
+  openxlsx::write.xlsx(agg, fs::path(org::PROJ$SHARED_TODAY,folder,"sex_change_per_year_by_born_sex.xlsx"))
   
   q <- ggplot(agg,aes(x=yearSexChange,y=N,colour=bornSex))
   q <- q + geom_line()
@@ -165,7 +165,7 @@ Analyses_1 <- function(dz, pop){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, file.path(FOLDERS$results_today,"analyses_1","sex_change_per_year_by_born_sex.png"))
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"sex_change_per_year_by_born_sex.png"))
   
   q <- ggplot(agg,aes(x=yearSexChange,y=N/pop*10000,colour=bornSex))
   q <- q + geom_line()
@@ -177,7 +177,7 @@ Analyses_1 <- function(dz, pop){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, file.path(FOLDERS$results_today,"analyses_1","sex_change_per_year_by_born_sex_incidence.png"))
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"sex_change_per_year_by_born_sex_incidence.png"))
   
   
 }

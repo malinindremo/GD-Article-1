@@ -16,20 +16,41 @@ Validate_1_int <- function(d,num){
   return(agg)
 }
 
-Validate_1 <- function(d){
+Validate_1 <- function(d,byvar){
+  res <- d[,
+           .(
+             N=.N,
+             c_isHormone_2005_07_to_2016_12=sum(c_isHormone_2005_07_to_2016_12),
+             c_isSurgicalMasectomy_2005_07_to_2016_12=sum(c_isSurgicalMasectomy_2005_07_to_2016_12),
+             c_isSurgicalPenisTestProsth_2005_07_to_2016_12=sum(c_isSurgicalPenisTestProsth_2005_07_to_2016_12),
+             c_isSurgicalReconstVag_2005_07_to_2016_12=sum(c_isSurgicalReconstVag_2005_07_to_2016_12),
+             c_isSurgicalPenisAmp_2005_07_to_2016_12=sum(c_isSurgicalPenisAmp_2005_07_to_2016_12),
+             
+             num_people_c_isSurgical_2005_07_to_2016_12=sum(
+                 c_isSurgicalMasectomy_2005_07_to_2016_12 |
+                 c_isSurgicalPenisTestProsth_2005_07_to_2016_12 |
+                 c_isSurgicalReconstVag_2005_07_to_2016_12 |
+                 c_isSurgicalPenisAmp_2005_07_to_2016_12
+             ),
+             
+             num_people_c_isSurgicalOrHormonal_2005_07_to_2016_12=sum(
+               c_isHormone_2005_07_to_2016_12 |
+                 c_isSurgicalMasectomy_2005_07_to_2016_12 |
+                 c_isSurgicalPenisTestProsth_2005_07_to_2016_12 |
+                 c_isSurgicalReconstVag_2005_07_to_2016_12 |
+                 c_isSurgicalPenisAmp_2005_07_to_2016_12
+             )
+           ),
+           keyby=.(
+             bornSex,
+             category=get(byvar)
+           )]
+  res[,perc_people_c_isSurgicalOrHormonal_2005_07_to_2016_12:=round(100*num_people_c_isSurgicalOrHormonal_2005_07_to_2016_12/N,1)]
   
-  res <- vector("list", length=sum(stringr::str_detect(names(d),"^analysisCat_[0-9]+")))
-  for(i in seq_along(res)){
-    res[[i]] <- Validate_1_int(d,num=i)
-    x <- res[[i]][1,]
-    for(j in names(x)){
-      x[,(j):=NA]
-    }
-    res[[i]] <- rbind(res[[i]],x)
-  }
-  
-  res <- rbindlist(res)
+  res <- melt.data.table(res, id.vars=c("bornSex","category"))
+  res <- dcast.data.table(res, bornSex+variable~category, value.var = "value")
   
   openxlsx::write.xlsx(res, file=
-                         file.path(FOLDERS$results_today,"validation_1","Validate_1.xlsx"))
+                         fs::path(org::PROJ$SHARED_TODAY,"validation",glue::glue("Validate_{byvar}.xlsx")))
+  
 }

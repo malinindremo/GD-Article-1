@@ -7,17 +7,17 @@ OverwriteWithEarlist <- function(d,rows,resVarDate,resVarCat,valVarDate,valCat){
 
 CleanData <- function(){
   
-  ov <- data.table(haven::read_sas(file.path(FOLDERS$data,"Sos/ov.sas7bdat")))
-  sv <- data.table(haven::read_sas(file.path(FOLDERS$data,"Sos/sv.sas7bdat")))
-  rx <- data.table(haven::read_sas(file.path(FOLDERS$data,"Sos/ut_r_lmed_10218_2017.sas7bdat")))
-  demografi <- data.table(haven::read_sas(file.path(FOLDERS$data,"SCB/demografi.sas7bdat")))
-  sex <- data.table(haven::read_sas(file.path(FOLDERS$data,"SCB/kon.sas7bdat")))
+  ov <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","ov.sas7bdat")))
+  sv <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","sv.sas7bdat")))
+  rx <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","ut_r_lmed_10218_2017.sas7bdat")))
+  demografi <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","demografi.sas7bdat")))
+  sex <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","kon.sas7bdat")))
   sex[,isBornMale:=kon==1]
   sex[,bornSex:=ifelse(isBornMale,"Born Male","Born Female")]
   sex[,kon:=NULL]
  
   ## sex change 
-  sexChange <- data.table(haven::read_sas(file.path(FOLDERS$data,"SCB/konsbyten.sas7bdat")))
+  sexChange <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","konsbyten.sas7bdat")))
   sexChange[,dateSexChange:=as.Date(sprintf(
     "%s-%s-%s",
     stringr::str_sub(konsbyte_datum,1,4),
@@ -70,23 +70,52 @@ CleanData <- function(){
   rx[,dob:=NULL]
  
   # remove hormones that are going the wrong way with regards to gender
-  rx[isBornMale==TRUE,isHormoneFTM:=FALSE]
-  rx[isBornMale==FALSE,isHormoneMTF:=FALSE]
+  rx[,c_isHormoneFTM:=isHormoneFTM]
+  rx[,c_isHormoneMTF:=isHormoneMTF]
+  rx[,c_isHormonePubBlock:=isHormonePubBlock]
+  
+  rx[isBornMale==TRUE,c_isHormoneFTM:=FALSE]
+  rx[isBornMale==FALSE,c_isHormoneMTF:=FALSE]
   # puberty blockers for 19+ year olds are discarded
-  rx[isHormonePubBlock==TRUE & age>=19,isHormonePubBlock:=FALSE]
+  rx[isHormonePubBlock==TRUE & age>=19,c_isHormonePubBlock:=FALSE]
   rx[,age:=NULL]
   
   rx[,isHormone:=isHormoneMTF | isHormoneFTM | isHormonePubBlock]
+  rx[,c_isHormone:=c_isHormoneMTF | c_isHormoneFTM | c_isHormonePubBlock]
+  
+  rx[,isHormoneMTF_2005_07_to_2016_12:=isHormoneMTF]
+  rx[FDATUM < "2005-07-01",isHormoneMTF_2005_07_to_2016_12:=FALSE]
+  rx[FDATUM > "2016-12-31",isHormoneMTF_2005_07_to_2016_12:=FALSE]
+  
+  rx[,isHormoneFTM_2005_07_to_2016_12:=isHormoneFTM]
+  rx[FDATUM < "2005-07-01",isHormoneFTM_2005_07_to_2016_12:=FALSE]
+  rx[FDATUM > "2016-12-31",isHormoneFTM_2005_07_to_2016_12:=FALSE]
+  
+  rx[,isHormonePubBlock_2005_07_to_2016_12:=isHormonePubBlock]
+  rx[FDATUM < "2005-07-01",isHormonePubBlock_2005_07_to_2016_12:=FALSE]
+  rx[FDATUM > "2016-12-31",isHormonePubBlock_2005_07_to_2016_12:=FALSE]
   
   rx[,isHormone_2005_07_to_2016_12:=isHormone]
   rx[FDATUM < "2005-07-01",isHormone_2005_07_to_2016_12:=FALSE]
   rx[FDATUM > "2016-12-31",isHormone_2005_07_to_2016_12:=FALSE]
   
+  rx[,c_isHormone_2005_07_to_2016_12:=c_isHormone]
+  rx[FDATUM < "2005-07-01",c_isHormone_2005_07_to_2016_12:=FALSE]
+  rx[FDATUM > "2016-12-31",c_isHormone_2005_07_to_2016_12:=FALSE]
+  
   # collapse down to 1 row/person
   rx <- rx[,.(
     isHormone=as.logical(max(isHormone)),
     dateFirstHormone=min(FDATUM[isHormone==TRUE]),
-    isHormone_2005_07_to_2016_12=as.logical(max(isHormone_2005_07_to_2016_12))
+    isHormone_2005_07_to_2016_12=as.logical(max(isHormone_2005_07_to_2016_12)),
+    
+    isHormoneMTF_2005_07_to_2016_12=as.logical(max(isHormoneMTF_2005_07_to_2016_12)),
+    isHormoneFTM_2005_07_to_2016_12=as.logical(max(isHormoneFTM_2005_07_to_2016_12)),
+    isHormonePubBlock_2005_07_to_2016_12=as.logical(max(isHormonePubBlock_2005_07_to_2016_12)),
+    
+    c_isHormone=as.logical(max(c_isHormone)),
+    c_dateFirstHormone=min(FDATUM[c_isHormone==TRUE]),
+    c_isHormone_2005_07_to_2016_12=as.logical(max(c_isHormone_2005_07_to_2016_12))
   ),by=.(LopNr)]
   nrow(rx)
   for(i in names(rx)){
@@ -131,6 +160,10 @@ CleanData <- function(){
     patients[stringr::str_detect(get(i),"^Q555"), isCodeUsedWithSurgery:=TRUE]
   }
   patients[,isF64_089:=isF64_0 | isF64_89]
+  
+  patients[,isF64_089_2005_07_to_2016_12:=isF64_089]
+  patients[INDATUM < "2005-07-01",isF64_089_2005_07_to_2016_12:=FALSE]
+  patients[INDATUM > "2016-12-31",isF64_089_2005_07_to_2016_12:=FALSE]
   
   # surgeries
   surgeries <- list()
@@ -212,6 +245,8 @@ CleanData <- function(){
     
     hadTranssexual_ICD_89=as.logical(max(isTranssexual_ICD_89)),
     
+    numF64_089_2005_07_to_2016_12=sum(isF64_089_2005_07_to_2016_12),
+    
     numF64_089=sum(isF64_089),
     numF64_0=sum(isF64_0),
     numF64_89=sum(isF64_89),
@@ -219,8 +254,13 @@ CleanData <- function(){
     isSurgicalMasectomy_2005_07_to_2016_12=as.logical(max(isSurgicalMasectomy_2005_07_to_2016_12)),
     dateFirst_SurgicalMasectomy=min(INDATUM[isSurgicalMasectomy==TRUE]),
     
+    isSurgicalReconstVag_2005_07_to_2016_12=as.logical(max(isSurgicalReconstVag_2005_07_to_2016_12)),
     dateFirst_SurgicalReconstVag=min(INDATUM[isSurgicalReconstVag==TRUE]),
+    
+    isSurgicalPenisAmp_2005_07_to_2016_12=as.logical(max(isSurgicalPenisAmp_2005_07_to_2016_12)),
     dateFirst_SurgicalPenisAmp=min(INDATUM[isSurgicalPenisAmp==TRUE]),
+    
+    isSurgicalPenisTestProsth_2005_07_to_2016_12=as.logical(max(isSurgicalPenisTestProsth_2005_07_to_2016_12)),
     dateFirst_SurgicalPenisTestProsth=min(INDATUM[isSurgicalPenisTestProsth==TRUE])
   ), by=.(
     LopNr
@@ -258,339 +298,161 @@ CleanData <- function(){
   for(i in stringr::str_subset(names(d),"^is")){
     d[is.na(get(i)),(i):=FALSE]
   }
+  for(i in stringr::str_subset(names(d),"^c_is")){
+    d[is.na(get(i)),(i):=FALSE]
+  }
+  
+  d[,hadSexChange_le2000_12_31:=FALSE]
+  d[dateSexChange<"2001-01-01",hadSexChange_le2000_12_31:=TRUE]
+  d[,hadSexChange_le2005_06_30:=FALSE]
+  d[dateSexChange<"2005-07-01",hadSexChange_le2005_06_30:=TRUE]
+  
+  d[,c_isSurgicalMasectomy_2005_07_to_2016_12:=isSurgicalMasectomy_2005_07_to_2016_12]
+  d[isBornMale==TRUE,c_isSurgicalMasectomy_2005_07_to_2016_12:=FALSE]
+  d[,c_dateFirst_SurgicalMasectomy:=dateFirst_SurgicalMasectomy]
+  d[isBornMale==TRUE,c_dateFirst_SurgicalMasectomy:=NA]
+  
+  d[,c_isSurgicalPenisTestProsth_2005_07_to_2016_12:=isSurgicalPenisTestProsth_2005_07_to_2016_12]
+  d[isBornMale==TRUE,c_isSurgicalPenisTestProsth_2005_07_to_2016_12:=FALSE]
+  d[,c_dateFirst_SurgicalPenisTestProsth:=dateFirst_SurgicalPenisTestProsth]
+  d[isBornMale==TRUE,c_dateFirst_SurgicalPenisTestProsth:=NA]
+  
+  d[,c_isSurgicalReconstVag_2005_07_to_2016_12:=isSurgicalReconstVag_2005_07_to_2016_12]
+  d[isBornMale==FALSE,c_isSurgicalReconstVag_2005_07_to_2016_12:=FALSE]
+  d[,c_dateFirst_SurgicalReconstVag:=dateFirst_SurgicalReconstVag]
+  d[isBornMale==FALSE,c_dateFirst_SurgicalReconstVag:=NA]
+  
+  d[,c_isSurgicalPenisAmp_2005_07_to_2016_12:=isSurgicalPenisAmp_2005_07_to_2016_12]
+  d[isBornMale==FALSE,c_isSurgicalPenisAmp_2005_07_to_2016_12:=FALSE]
+  d[,c_dateFirst_SurgicalPenisAmp:=dateFirst_SurgicalPenisAmp]
+  d[isBornMale==FALSE,c_dateFirst_SurgicalPenisAmp:=NA]
   
   # create the categorioes
-  d[,category:="No diagnosis"]
-  d[is.na(dateFirst_F64_0) & !is.na(dateFirst_F64_89),category:="Only F64.8/9"]
-  d[!is.na(dateFirst_F64_0) & is.na(dateFirst_F64_89),category:="Only F64.0"]
-  d[dateFirst_F64_0==dateFirst_F64_089 & dateFirst_F64_89==dateFirst_F64_089,
-    category:="F64.0 and F64.8/9 at first consult"]
-  d[dateLast_F64_0==dateLast_F64_89,
-    category:="F64.0 and F64.8/9 at last consult"]
-  d[dateFirst_F64_0==dateFirst_F64_089 & dateFirst_F64_89>dateFirst_F64_089 & dateLast_F64_0>dateLast_F64_89,
-    category:="F64.0 -> F64.8/9 -> F64.0"]
-  d[dateFirst_F64_0==dateFirst_F64_089 & dateFirst_F64_89>dateFirst_F64_089 & dateLast_F64_0<dateLast_F64_89,
-    category:="F64.0 -> F64.8/9"]
-  d[dateFirst_F64_0>dateFirst_F64_089 & dateFirst_F64_89==dateFirst_F64_089 & dateLast_F64_89>dateLast_F64_0,
-    category:="F64.8/9 -> F64.0 -> F64.8/9"]
-  d[dateFirst_F64_0>dateFirst_F64_089 & dateFirst_F64_89==dateFirst_F64_089 & dateLast_F64_89<dateLast_F64_0,
-    category:="F64.8/9 -> F64.0"]
   
-  d[is.na(category)]
-  xtabs(~d$category,addNA=T)
-  
-  # gender confirming treatment
-  d[,]
-  
-  # new variables
-  d[,yearFirst_F64_089:=as.numeric(format.Date(dateFirst_F64_089, "%G"))]
-  d[,daysFirst_F64_0:=as.numeric(difftime(dateFirst_F64_0,dateFirst_F64_089,units="days"))]
-  d[,daysFirst_F64_89:=as.numeric(difftime(dateFirst_F64_89,dateFirst_F64_089,units="days"))]
-  
+  ####
   # analysis cats
-  # F64_089
-  # until 2013
-  d[,analysisCat_x:=as.character(NA)]
-  d[numF64_089>=3 & 
-      dateFirst_F64_089>="2001-01-01" & 
-      dateFirst_F64_089<="2016-12-31",
-    analysisCat_x:="numF64_089>=3, first diag: [2001-01-01, 2016-12-31]"]
-  d[hadTranssexual_ICD_89==TRUE,analysisCat_x:=NA]
-  d[dateSexChange<"2001-01-01",analysisCat_x:=NA]
-  d[!is.na(analysisCat_x),analysisYear_x:=YearN(dateFirst_F64_089)]
-  d[!is.na(analysisCat_x),analysisAge_x:=ageFirst_F64_089]
-  d[,analysisAgeCat_x:=cut(analysisAge_x,breaks = c(0,18,30,50,200),include.lowest = T)]
-  d$analysisAgeCat_x
-  #d[,analysisAgeCat_x:=as.character(analysisAgeCat_x)]
+  # F64_089 + treatments
+  d[,c_analysisCat_treatments_withicd89_sexchange:=as.character(NA)]
+  d[,c_analysisDate_treatments:=dateFirst_F64_089]
   
+  # hormones
+  d[,
+    dateFirst_F64_089<c_analysisDate_treatments & 
+    numF64_089>=1 & 
+    dateFirst_F64_089>="2005-07-01" &
+    dateFirst_F64_089<="2016-12-31" & 
+    c_dateFirstHormone>="2005-07-01" & 
+    c_dateFirstHormone<="2016-12-31",
+    
+    c_analysisCat_treatments_withicd89_sexchange:="numF64_089>=1 & hormones/surgery, first diag: [2005-07-01, 2016-12-31]"
+  ]
   
-  # analysis cats
-  # F64_089
-  # until 2013
-  d[,analysisCat_y:=as.character(NA)]
-  d[numF64_089==1 & 
-      dateFirst_F64_089>="2001-01-01" & 
-      dateFirst_F64_089<="2016-12-31",
-    analysisCat_y:="numF64_089==1, first diag: [2001-01-01, 2016-12-31]"]
-  d[numF64_089==2 & 
-      dateFirst_F64_089>="2001-01-01" & 
-      dateFirst_F64_089<="2016-12-31",
-    analysisCat_y:="numF64_089==2, first diag: [2001-01-01, 2016-12-31]"]
-  d[numF64_089==3 & 
-      dateFirst_F64_089>="2001-01-01" & 
-      dateFirst_F64_089<="2016-12-31",
-    analysisCat_y:="numF64_089==3, first diag: [2001-01-01, 2016-12-31]"]
-  d[numF64_089>=4 & 
-      dateFirst_F64_089>="2001-01-01" & 
-      dateFirst_F64_089<="2016-12-31",
-    analysisCat_y:="numF64_089>=4, first diag: [2001-01-01, 2016-12-31]"]
-  d[hadTranssexual_ICD_89==TRUE,analysisCat_y:=NA]
-  d[dateSexChange<"2001-01-01",analysisCat_y:=NA]
-  d[!is.na(analysisCat_y),analysisYear_y:=YearN(dateFirst_F64_089)]
-  d[!is.na(analysisCat_y),analysisAge_y:=ageFirst_F64_089]
-  d[,analysisAgeCat_y:=cut(analysisAge_y,breaks = c(0,18,30,50,200),include.lowest = T)]
-  d$analysisAgeCat_y
-  #d[,analysisAgeCat_x:=as.character(analysisAgeCat_x)]
+  # masectomy
+  d[,
+    dateFirst_F64_089<c_analysisDate_treatments & 
+      numF64_089>=1 & 
+      dateFirst_F64_089>="2005-07-01" &
+      dateFirst_F64_089<="2016-12-31" & 
+      c_dateFirst_SurgicalMasectomy>="2005-07-01" & 
+      c_dateFirst_SurgicalMasectomy<="2016-12-31",
+    
+    c_analysisCat_treatments_withicd89_sexchange:="numF64_089>=1 & hormones/surgery, first diag: [2005-07-01, 2016-12-31]"
+    ]
   
-  d[,hormoneCat_y:=as.character(NA)]
-  d[!is.na(analysisCat_y),hormoneCat_y:="No hormones"]
-  d[!is.na(analysisCat_y) & dateFirstHormone<dateFirst_F64_089,hormoneCat_y:="Hormones before diag"]
-  d[!is.na(analysisCat_y) & (dateFirstHormone>=dateFirst_F64_089) & !is.na(dateFirstHormone),hormoneCat_y:="Hormones after diag"]
-  xtabs(~d$hormoneCat_y)
+  # penisamp
+  d[,
+    dateFirst_F64_089<c_analysisDate_treatments & 
+      numF64_089>=1 & 
+      dateFirst_F64_089>="2005-07-01" &
+      dateFirst_F64_089<="2016-12-31" & 
+      c_dateFirst_SurgicalPenisAmp>="2005-07-01" & 
+      c_dateFirst_SurgicalPenisAmp<="2016-12-31",
+    
+    c_analysisCat_treatments_withicd89_sexchange:="numF64_089>=1 & hormones/surgery, first diag: [2005-07-01, 2016-12-31]"
+    ]
   
-  d[,surgicalMasectomyCat_y:=as.character(NA)]
-  d[!is.na(analysisCat_y),surgicalMasectomyCat_y:="No masectomy"]
-  d[!is.na(analysisCat_y) & dateFirst_SurgicalMasectomy<dateFirst_F64_089,surgicalMasectomyCat_y:="Masectomy before diag"]
-  d[!is.na(analysisCat_y) & dateFirst_SurgicalMasectomy>=dateFirst_F64_089,surgicalMasectomyCat_y:="Masectomy after diag"]
-  xtabs(~d$surgicalMasectomyCat_y)
+  # reconstvag
+  d[,
+    dateFirst_F64_089<c_analysisDate_treatments & 
+      numF64_089>=1 & 
+      dateFirst_F64_089>="2005-07-01" &
+      dateFirst_F64_089<="2016-12-31" & 
+      c_dateFirst_SurgicalReconstVag>="2005-07-01" & 
+      c_dateFirst_SurgicalReconstVag<="2016-12-31",
+    
+    c_analysisCat_treatments_withicd89_sexchange:="numF64_089>=1 & hormones/surgery, first diag: [2005-07-01, 2016-12-31]"
+    ]
   
-  d[,hormoneAndSurgicalMasectomyCat_y:=sprintf("%s/\n%s",hormoneCat_y,surgicalMasectomyCat_y)]
-  xtabs(~d$hormoneAndSurgicalMasectomyCat_y)
+  # penistestprosth
+  d[,
+    dateFirst_F64_089<c_analysisDate_treatments & 
+      numF64_089>=1 & 
+      dateFirst_F64_089>="2005-07-01" &
+      dateFirst_F64_089<="2016-12-31" & 
+      c_dateFirst_SurgicalPenisTestProsth>="2005-07-01" & 
+      c_dateFirst_SurgicalPenisTestProsth<="2016-12-31",
+    
+    c_analysisCat_treatments_withicd89_sexchange:="numF64_089>=1 & hormones/surgery, first diag: [2005-07-01, 2016-12-31]"
+    ]
+  
+  d[,c_analysisCat_treatments:=c_analysisCat_treatments_withicd89_sexchange]
+  d[hadTranssexual_ICD_89==TRUE,c_analysisCat_treatments:=NA]
+  d[hadSexChange_le2005_06_30==TRUE,c_analysisCat_treatments:=NA]
+  
+  d[is.na(c_analysisCat_treatments), c_analysisDate_treatments:=NA]
+  
+  d[,c_analysisYear_treatments:=YearN(c_analysisDate_treatments)]
+  d[,c_analysisAge_treatments:=as.numeric(difftime(c_analysisDate_treatments,dob,units="days"))/365.25]
+  d[,c_analysisAgeCat_treatments:=cut(c_analysisAge_treatments,breaks = c(0,18,30,50,200),include.lowest = T)]
+  xtabs(~d$c_analysisCat_treatments+d$c_analysisYear_treatments)
+  xtabs(~d$c_analysisAgeCat_treatments)
   
   ####
   # analysis cats
   # F64_089
-  # until 2013
-  d[,analysisCat_z:=as.character(NA)]
-  d[,analysisDate_z:=as.Date("2100-01-01")]
+  d[,c_analysisCat_diag_withicd89_sexchange:=as.character(NA)]
+  d[,c_analysisDate_diag:=dateFirst_F64_089]
+  d[
+    numF64_089>=4 & 
+    dateFirst_F64_089>="2001-01-01" &
+    dateFirst_F64_089<="2016-12-31",
+    c_analysisCat_diag_withicd89_sexchange:="numF64_089>=4, first diag: [2001-01-01, 2016-12-31]"
+   ]
   
-  rows <- d$dateFirst_F64_089<d$analysisDate_z & 
-    d$numF64_089>=3 & 
-    d$dateFirst_F64_089>="2001-01-01" & 
-    d$dateFirst_F64_089<="2005-07-31"
-  OverwriteWithEarlist(
-    d=d,
-    rows=rows,
-    resVarDate="analysisDate_z",
-    resVarCat="analysisCat_z",
-    valVarDate="dateFirst_F64_089",
-    valCat="numF64_089>=3, first diag: [2001-01-01, 2005-07-31]")
+  d[,c_analysisCat_diag:=c_analysisCat_diag_withicd89_sexchange]
+  d[hadTranssexual_ICD_89==TRUE,c_analysisCat_diag:=NA]
+  d[hadSexChange_le2000_12_31==TRUE,c_analysisCat_diag:=NA]
   
-  # hormones
-  rows <- d$dateFirstHormone<d$analysisDate_z & 
-    d$dateFirstHormone>="2001-01-01" & 
-    d$dateFirstHormone<="2016-12-31"
-  OverwriteWithEarlist(
-    d=d,
-    rows=rows,
-    resVarDate="analysisDate_z",
-    resVarCat="analysisCat_z",
-    valVarDate="dateFirstHormone",
-    valCat="hormones, first diag: [2001-01-01, 2016-12-31]")
+  d[is.na(c_analysisCat_diag), c_analysisDate_diag:=NA]
   
-  # masectomy
-  rows <- d$dateFirst_SurgicalMasectomy<d$analysisDate_z & 
-    d$dateFirst_SurgicalMasectomy>="2001-01-01" & 
-    d$dateFirst_SurgicalMasectomy<="2016-12-31"
-  OverwriteWithEarlist(
-    d=d,
-    rows=rows,
-    resVarDate="analysisDate_z",
-    resVarCat="analysisCat_z",
-    valVarDate="dateFirst_SurgicalMasectomy",
-    valCat="masectomy, first diag: [2001-01-01, 2016-12-31]")
+  d[,c_analysisYear_diag:=YearN(c_analysisDate_diag)]
+  d[,c_analysisAge_diag:=as.numeric(difftime(c_analysisDate_diag,dob,units="days"))/365.25]
+  d[,c_analysisAgeCat_diag:=cut(c_analysisAge_diag,breaks = c(0,18,30,50,200),include.lowest = T)]
+  xtabs(~d$c_analysisCat_diag+d$c_analysisYear_diag)
+  xtabs(~d$c_analysisAgeCat_diag)
   
-  # penisamp
-  rows <- d$dateFirst_SurgicalPenisAmp<d$analysisDate_z & 
-    d$dateFirst_SurgicalPenisAmp>="2001-01-01" & 
-    d$dateFirst_SurgicalPenisAmp<="2016-12-31"
-  OverwriteWithEarlist(
-    d=d,
-    rows=rows,
-    resVarDate="analysisDate_z",
-    resVarCat="analysisCat_z",
-    valVarDate="dateFirst_SurgicalPenisAmp",
-    valCat="penisamp, first diag: [2001-01-01, 2016-12-31]")
+  # dateFirst_F64_089
+  xtabs(~d$numF64_089_2005_07_to_2016_12,addNA=T)
+  d[,c_analysisCat_F64_089_ge10:="00 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12==1,c_analysisCat_F64_089_ge10:="01 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12==2,c_analysisCat_F64_089_ge10:="02 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12==3,c_analysisCat_F64_089_ge10:="03 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12==4,c_analysisCat_F64_089_ge10:="04 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12==5,c_analysisCat_F64_089_ge10:="05 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12==6,c_analysisCat_F64_089_ge10:="06 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12==7,c_analysisCat_F64_089_ge10:="07 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12==8,c_analysisCat_F64_089_ge10:="08 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12==9,c_analysisCat_F64_089_ge10:="09 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12>=10,c_analysisCat_F64_089_ge10:="10+ F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
   
-  # reconstvag
-  rows <- d$dateFirst_SurgicalReconstVag<d$analysisDate_z & 
-    d$dateFirst_SurgicalReconstVag>="2001-01-01" & 
-    d$dateFirst_SurgicalReconstVag<="2016-12-31"
-  OverwriteWithEarlist(
-    d=d,
-    rows=rows,
-    resVarDate="analysisDate_z",
-    resVarCat="analysisCat_z",
-    valVarDate="dateFirst_SurgicalReconstVag",
-    valCat="reconstvag, first diag: [2001-01-01, 2016-12-31]")
+  d[,c_analysisCat_F64_089_ge4:="0 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12==1,c_analysisCat_F64_089_ge4:="1 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12==2,c_analysisCat_F64_089_ge4:="2 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12==3,c_analysisCat_F64_089_ge4:="3 F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
+  d[numF64_089_2005_07_to_2016_12>=4,c_analysisCat_F64_089_ge4:="4+ F64.0/8/9 diagnosis [2005-07-01, 2016-12-31]"]
   
-  # penistestprosth
-  rows <- d$dateFirst_SurgicalPenisTestProsth<d$analysisDate_z & 
-    d$dateFirst_SurgicalPenisTestProsth>="2001-01-01" & 
-    d$dateFirst_SurgicalPenisTestProsth<="2016-12-31"
-  OverwriteWithEarlist(
-    d=d,
-    rows=rows,
-    resVarDate="analysisDate_z",
-    resVarCat="analysisCat_z",
-    valVarDate="dateFirst_SurgicalPenisTestProsth",
-    valCat="penistestprosth, first diag: [2001-01-01, 2016-12-31]")
-  
-  d[hadTranssexual_ICD_89==TRUE,analysisCat_z:=NA]
-  d[dateSexChange<"2001-01-01",analysisCat_z:=NA]
-  d[is.na(analysisCat_z), analysisDate_z:=NA]
-  d[,analysisYear_z:=YearN(analysisDate_z)]
-  d[,analysisAge_z:=as.numeric(difftime(analysisDate_z,dob,units="days"))/365.25]
-  d[,analysisAgeCat_z:=cut(analysisAge_z,breaks = c(0,18,30,50,200),include.lowest = T)]
-  xtabs(~d$analysisCat_z+d$analysisYear_z)
-  xtabs(~d$analysisAgeCat_z)
-  #d[,analysisAgeCat_x:=as.character(analysisAgeCat_x)]
-  
-  # analysis cats
-  # F64_089
-  # until 2013
-  d[,analysisCat_1:=as.character(NA)]
-  d[numF64_089==1 & 
-      dateFirst_F64_089>="2005-07-01" & 
-      dateFirst_F64_089<="2013-12-31",
-    analysisCat_1:="numF64_089==1, first diag: [2005-07-01, 2013-12-31]"]
-  d[!is.na(analysisCat_1),analysisYear_1:=YearN(dateFirst_F64_089)]
-  
-  d[,analysisCat_2:=as.character(NA)]
-  d[numF64_089==2 & 
-      dateFirst_F64_089>="2005-07-01" & 
-      dateFirst_F64_089<="2013-12-31",
-    analysisCat_2:="numF64_089==2, first diag: [2005-07-01, 2013-12-31]"]
-  d[!is.na(analysisCat_2),analysisYear_2:=YearN(dateFirst_F64_089)]
-  
-  d[,analysisCat_3:=as.character(NA)]
-  d[numF64_089>=3 & 
-      dateFirst_F64_089>="2005-07-01" & 
-      dateFirst_F64_089<="2013-12-31",
-    analysisCat_3:="numF64_089>=3, first diag: [2005-07-01, 2013-12-31]"]
-  d[!is.na(analysisCat_3),analysisYear_3:=YearN(dateFirst_F64_089)]
-  
-  d[,analysisCat_4:=as.character(NA)]
-  d[numF64_089>=4 & 
-      dateFirst_F64_089>="2005-07-01" & 
-      dateFirst_F64_089<="2013-12-31",
-    analysisCat_4:="numF64_089>=4, first diag: [2005-07-01, 2013-12-31]"]
-  d[!is.na(analysisCat_4),analysisYear_4:=YearN(dateFirst_F64_089)]
-  
-  # until 2014
-  d[,analysisCat_5:=as.character(NA)]
-  d[numF64_089==1 & 
-      dateFirst_F64_089>="2005-07-01" & 
-      dateFirst_F64_089<="2014-12-31",
-    analysisCat_5:="numF64_089==1, first diag: [2005-07-01, 2014-12-31]"]
-  d[!is.na(analysisCat_5),analysisYear_5:=YearN(dateFirst_F64_089)]
-  
-  d[,analysisCat_6:=as.character(NA)]
-  d[numF64_089==2 & 
-      dateFirst_F64_089>="2005-07-01" & 
-      dateFirst_F64_089<="2014-12-31",
-    analysisCat_6:="numF64_089==2, first diag: [2005-07-01, 2014-12-31]"]
-  d[!is.na(analysisCat_6),analysisYear_6:=YearN(dateFirst_F64_089)]
-  
-  d[,analysisCat_7:=as.character(NA)]
-  d[numF64_089>=3 & 
-      dateFirst_F64_089>="2005-07-01" & 
-      dateFirst_F64_089<="2014-12-31",
-    analysisCat_7:="numF64_089>=3, first diag: [2005-07-01, 2014-12-31]"]
-  d[!is.na(analysisCat_7),analysisYear_7:=YearN(dateFirst_F64_089)]
-  
-  d[,analysisCat_8:=as.character(NA)]
-  d[numF64_089>=4 & 
-      dateFirst_F64_089>="2005-07-01" & 
-      dateFirst_F64_089<="2014-12-31",
-    analysisCat_8:="numF64_089>=4, first diag: [2005-07-01, 2014-12-31]"]
-  d[!is.na(analysisCat_8),analysisYear_8:=YearN(dateFirst_F64_089)]
-  
-  # F64_89
-  # until 2013
-  d[,analysisCat_9:=as.character(NA)]
-  d[numF64_89==1 & 
-      dateFirst_F64_89>="2005-07-01" & 
-      dateFirst_F64_89<="2013-12-31",
-    analysisCat_9:="numF64_89==1, first diag: [2005-07-01, 2013-12-31]"]
-  d[!is.na(analysisCat_9),analysisYear_9:=YearN(dateFirst_F64_89)]
-  
-  d[,analysisCat_10:=as.character(NA)]
-  d[numF64_89==2 & 
-      dateFirst_F64_89>="2005-07-01" & 
-      dateFirst_F64_89<="2013-12-31",
-    analysisCat_10:="numF64_89==2, first diag: [2005-07-01, 2013-12-31]"]
-  d[!is.na(analysisCat_10),analysisYear_10:=YearN(dateFirst_F64_89)]
-  
-  d[,analysisCat_11:=as.character(NA)]
-  d[numF64_89>=3 & 
-      dateFirst_F64_89>="2005-07-01" & 
-      dateFirst_F64_89<="2013-12-31",
-    analysisCat_11:="numF64_89>=3, first diag: [2005-07-01, 2013-12-31]"]
-  d[!is.na(analysisCat_11),analysisYear_11:=YearN(dateFirst_F64_89)]
-  
-  # until 2014
-  d[,analysisCat_12:=as.character(NA)]
-  d[numF64_89==1 & 
-      dateFirst_F64_89>="2005-07-01" & 
-      dateFirst_F64_89<="2014-12-31",
-    analysisCat_12:="numF64_89==1, first diag: [2005-07-01, 2014-12-31]"]
-  d[!is.na(analysisCat_12),analysisYear_12:=YearN(dateFirst_F64_89)]
-  
-  d[,analysisCat_13:=as.character(NA)]
-  d[numF64_89==2 & 
-      dateFirst_F64_89>="2005-07-01" & 
-      dateFirst_F64_89<="2014-12-31",
-    analysisCat_13:="numF64_89==2, first diag: [2005-07-01, 2014-12-31]"]
-  d[!is.na(analysisCat_13),analysisYear_13:=YearN(dateFirst_F64_89)]
-  
-  d[,analysisCat_14:=as.character(NA)]
-  d[numF64_89>=3 & 
-      dateFirst_F64_89>="2005-07-01" & 
-      dateFirst_F64_89<="2014-12-31",
-    analysisCat_14:="numF64_89>=3, first diag: [2005-07-01, 2014-12-31]"]
-  d[!is.na(analysisCat_14),analysisYear_14:=YearN(dateFirst_F64_89)]
-  
-  # F64_89 and F64_0==0
-  # until 2013
-  d[,analysisCat_15:=as.character(NA)]
-  d[numF64_0==0 &
-      numF64_89==1 & 
-      dateFirst_F64_89>="2005-07-01" & 
-      dateFirst_F64_89<="2013-12-31",
-    analysisCat_15:="numF64_0==0 & numF64_89==1, first diag: [2005-07-01, 2013-12-31]"]
-  d[!is.na(analysisCat_15),analysisYear_15:=YearN(dateFirst_F64_89)]
-  
-  d[,analysisCat_16:=as.character(NA)]
-  d[numF64_0==0 &
-      numF64_89==2 & 
-      dateFirst_F64_89>="2005-07-01" & 
-      dateFirst_F64_89<="2013-12-31",
-    analysisCat_16:="numF64_0==0 & numF64_89==2, first diag: [2005-07-01, 2013-12-31]"]
-  d[!is.na(analysisCat_16),analysisYear_16:=YearN(dateFirst_F64_89)]
-  
-  d[,analysisCat_17:=as.character(NA)]
-  d[numF64_0==0 &
-      numF64_89>=3 & 
-      dateFirst_F64_89>="2005-07-01" & 
-      dateFirst_F64_89<="2013-12-31",
-    analysisCat_17:="numF64_0==0 & numF64_89>=3, first diag: [2005-07-01, 2013-12-31]"]
-  d[!is.na(analysisCat_17),analysisYear_17:=YearN(dateFirst_F64_89)]
-  
-  # until 2014
-  d[,analysisCat_18:=as.character(NA)]
-  d[numF64_0==0 &
-      numF64_89==1 & 
-      dateFirst_F64_89>="2005-07-01" & 
-      dateFirst_F64_89<="2014-12-31",
-    analysisCat_18:="numF64_0==0 & numF64_89==1, first diag: [2005-07-01, 2014-12-31]"]
-  d[!is.na(analysisCat_18),analysisYear_18:=YearN(dateFirst_F64_89)]
-  
-  d[,analysisCat_19:=as.character(NA)]
-  d[numF64_0==0 &
-      numF64_89==2 & 
-      dateFirst_F64_89>="2005-07-01" & 
-      dateFirst_F64_89<="2014-12-31",
-    analysisCat_19:="numF64_0==0 & numF64_89==2, first diag: [2005-07-01, 2014-12-31]"]
-  d[!is.na(analysisCat_19),analysisYear_19:=YearN(dateFirst_F64_89)]
-  
-  d[,analysisCat_20:=as.character(NA)]
-  d[numF64_0==0 &
-      numF64_89>=3 & 
-      dateFirst_F64_89>="2005-07-01" & 
-      dateFirst_F64_89<="2014-12-31",
-    analysisCat_20:="numF64_0==0 & numF64_89>=3, first diag: [2005-07-01, 2014-12-31]"]
-  d[!is.na(analysisCat_20),analysisYear_20:=YearN(dateFirst_F64_89)]
+  xtabs(~d$c_analysisCat_F64_089_ge10,addNA=T)
+  xtabs(~d$c_analysisCat_F64_089_ge4,addNA=T)
   
   return(d)
 }
