@@ -336,20 +336,18 @@ CleanData <- function(){
   d[,c_analysisDate_treatments:=dateFirst_F64_089]
   
   # hormones
-  d[,
-    dateFirst_F64_089<c_analysisDate_treatments & 
-    numF64_089>=1 & 
-    dateFirst_F64_089>="2005-07-01" &
-    dateFirst_F64_089<="2016-12-31" & 
-    c_dateFirstHormone>="2005-07-01" & 
-    c_dateFirstHormone<="2016-12-31",
+  d[dateFirst_F64_089<c_analysisDate_treatments & 
+      numF64_089>=1 & 
+      dateFirst_F64_089>="2005-07-01" &
+      dateFirst_F64_089<="2016-12-31" & 
+      c_dateFirstHormone>="2005-07-01" & 
+      c_dateFirstHormone<="2016-12-31",
     
     c_analysisCat_treatments_withicd89_sexchange:="numF64_089>=1 & hormones/surgery, first diag: [2005-07-01, 2016-12-31]"
   ]
   
   # masectomy
-  d[,
-    dateFirst_F64_089<c_analysisDate_treatments & 
+  d[dateFirst_F64_089<c_analysisDate_treatments & 
       numF64_089>=1 & 
       dateFirst_F64_089>="2005-07-01" &
       dateFirst_F64_089<="2016-12-31" & 
@@ -360,8 +358,7 @@ CleanData <- function(){
     ]
   
   # penisamp
-  d[,
-    dateFirst_F64_089<c_analysisDate_treatments & 
+  d[dateFirst_F64_089<c_analysisDate_treatments & 
       numF64_089>=1 & 
       dateFirst_F64_089>="2005-07-01" &
       dateFirst_F64_089<="2016-12-31" & 
@@ -372,8 +369,7 @@ CleanData <- function(){
     ]
   
   # reconstvag
-  d[,
-    dateFirst_F64_089<c_analysisDate_treatments & 
+  d[dateFirst_F64_089<c_analysisDate_treatments & 
       numF64_089>=1 & 
       dateFirst_F64_089>="2005-07-01" &
       dateFirst_F64_089<="2016-12-31" & 
@@ -384,8 +380,7 @@ CleanData <- function(){
     ]
   
   # penistestprosth
-  d[,
-    dateFirst_F64_089<c_analysisDate_treatments & 
+  d[dateFirst_F64_089<c_analysisDate_treatments & 
       numF64_089>=1 & 
       dateFirst_F64_089>="2005-07-01" &
       dateFirst_F64_089<="2016-12-31" & 
