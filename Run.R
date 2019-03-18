@@ -50,29 +50,16 @@ Validate_1(d, byvar="c_analysisCat_F64_089_ge4")
 Validate_1(d, byvar="c_analysisCat_F64_089_ge10")
 
 dz <- d[!is.na(c_analysisCat_treatments)]
+nrow(dz)
 dz[,analysisCat_z:=c_analysisCat_treatments]
 dz[,analysisYear_z:=c_analysisYear_treatments]
+dz[,analysisAgeCat_z:=c_analysisAgeCat_treatments]
 Analyses_1(dz,pop=GetPop(), folder="analyses_treatments")
 
 dz <- d[!is.na(c_analysisCat_diag)]
 dz[,analysisCat_z:=c_analysisCat_diag]
 dz[,analysisYear_z:=c_analysisYear_diag]
+dz[,analysisAgeCat_z:=c_analysisAgeCat_diag]
 Analyses_1(dz,pop=GetPop(), folder="analyses_diag")
 
 # end?
-
-Descriptives_2(d)
-Validate_1(d)
-NumbersByYear_1(d)
-
-Validate_2(d)
-Validate_3(d)
-
-
-
-
-
-
-
-
-

@@ -127,6 +127,11 @@ CleanData <- function(){
   sv[,type:="inpatient"]
   patients <- rbind(ov,sv,fill=T)
   
+  # removing people who are missing INDATUM
+  #nrow(patients)
+  #patients <- patients[!is.na(INDATUM)]
+  #nrow(patients)
+  
   setorder(patients,LopNr,INDATUM)
   
   # merge with sex
@@ -231,6 +236,9 @@ CleanData <- function(){
   patients[,dateFirst:=min(INDATUM),by=LopNr]
   patients[isF64_089==TRUE,days:=as.numeric(difftime(INDATUM,dateFirst,units="days")),by=LopNr]
   
+  setorder(patients, LopNr, INDATUM)
+  patients[isF64_089==TRUE,num_F64_089:=1:.N,by=LopNr]
+  
   patients <- patients[,.(
     ageFirst_F64_089=min(age[isF64_089==TRUE]),
     ageFirst_F64_0=min(age[isF64_0==T]),
@@ -242,6 +250,16 @@ CleanData <- function(){
     
     dateLast_F64_0=max(INDATUM[isF64_0==T]),
     dateLast_F64_89=max(INDATUM[isF64_89==T]),
+    
+    date_F64_089_2=min(INDATUM[num_F64_089==2]),
+    date_F64_089_3=min(INDATUM[num_F64_089==3]),
+    date_F64_089_4=min(INDATUM[num_F64_089==4]),
+    date_F64_089_5=min(INDATUM[num_F64_089==5]),
+    date_F64_089_6=min(INDATUM[num_F64_089==6]),
+    date_F64_089_7=min(INDATUM[num_F64_089==7]),
+    date_F64_089_8=min(INDATUM[num_F64_089==8]),
+    date_F64_089_9=min(INDATUM[num_F64_089==9]),
+    date_F64_089_10=min(INDATUM[num_F64_089==10]),
     
     hadTranssexual_ICD_89=as.logical(max(isTranssexual_ICD_89)),
     
@@ -268,6 +286,17 @@ CleanData <- function(){
   for(i in names(patients)){
     patients[is.infinite(get(i)),(i):=NA]
   }
+  
+  # days to X diagnosis
+  patients[,years_to_F64_089_2:=as.numeric(difftime(date_F64_089_2,dateFirst_F64_089,units="days"))/365.25]
+  patients[,years_to_F64_089_3:=as.numeric(difftime(date_F64_089_3,dateFirst_F64_089,units="days"))/365.25]
+  patients[,years_to_F64_089_4:=as.numeric(difftime(date_F64_089_4,dateFirst_F64_089,units="days"))/365.25]
+  patients[,years_to_F64_089_5:=as.numeric(difftime(date_F64_089_5,dateFirst_F64_089,units="days"))/365.25]
+  patients[,years_to_F64_089_6:=as.numeric(difftime(date_F64_089_6,dateFirst_F64_089,units="days"))/365.25]
+  patients[,years_to_F64_089_7:=as.numeric(difftime(date_F64_089_7,dateFirst_F64_089,units="days"))/365.25]
+  patients[,years_to_F64_089_8:=as.numeric(difftime(date_F64_089_8,dateFirst_F64_089,units="days"))/365.25]
+  patients[,years_to_F64_089_9:=as.numeric(difftime(date_F64_089_9,dateFirst_F64_089,units="days"))/365.25]
+  patients[,years_to_F64_089_10:=as.numeric(difftime(date_F64_089_10,dateFirst_F64_089,units="days"))/365.25]
   #patients[,ageFirstCat:=cut(ageFirst,breaks=c(0,12,15,20,30,100))]
   
   # merge sex with hormones with diagnoses/surgeries
