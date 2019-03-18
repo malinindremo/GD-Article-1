@@ -426,6 +426,50 @@ CleanData <- function(){
   xtabs(~d$c_analysisCat_treatments+d$c_analysisYear_treatments)
   xtabs(~d$c_analysisAgeCat_treatments)
   
+  # date of first surgery or hormones
+  d[
+    !is.na(c_analysisCat_treatments) & 
+      c_dateFirstHormone>="2005-07-01" & 
+      c_dateFirstHormone<="2016-12-31", 
+    c_analysisCat_treatments_first_date_of_surgery_hormones:=as.Date("2100-01-01")]
+  
+  d[
+    !is.na(c_analysisCat_treatments) & 
+      c_dateFirstHormone>="2005-07-01" & 
+      c_dateFirstHormone<="2016-12-31" &
+      c_dateFirstHormone <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
+    c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirstHormone]
+  
+  d[
+    !is.na(c_analysisCat_treatments) & 
+      c_dateFirst_SurgicalMasectomy>="2005-07-01" & 
+      c_dateFirst_SurgicalMasectomy<="2016-12-31" &
+      c_dateFirst_SurgicalMasectomy <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
+    c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalMasectomy]
+  
+  d[
+    !is.na(c_analysisCat_treatments) & 
+      c_dateFirst_SurgicalPenisAmp>="2005-07-01" & 
+      c_dateFirst_SurgicalPenisAmp<="2016-12-31" &
+      c_dateFirst_SurgicalPenisAmp <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
+    c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalPenisAmp]
+  
+  d[
+    !is.na(c_analysisCat_treatments) & 
+      c_dateFirst_SurgicalReconstVag>="2005-07-01" & 
+      c_dateFirst_SurgicalReconstVag<="2016-12-31" &
+      c_dateFirst_SurgicalReconstVag <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
+    c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalReconstVag]
+  
+  d[
+    !is.na(c_analysisCat_treatments) & 
+      c_dateFirst_SurgicalPenisTestProsth>="2005-07-01" & 
+      c_dateFirst_SurgicalPenisTestProsth<="2016-12-31" &
+      c_dateFirst_SurgicalPenisTestProsth <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
+    c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalPenisTestProsth]
+  
+  d[!is.na(c_analysisCat_treatments_first_date_of_surgery_hormones),c_analysisCat_treatments_years_to_first_date_of_surgery_hormones:=as.numeric(difftime(c_analysisCat_treatments_first_date_of_surgery_hormones,dateFirst_F64_089,units="days"))/365.25]
+  
   ####
   # analysis cats
   # F64_089
