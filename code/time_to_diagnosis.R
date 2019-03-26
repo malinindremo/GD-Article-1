@@ -14,7 +14,7 @@ time_to_diagnosis <- function(d){
   q <- q + geom_step()
   q <- q + scale_y_continuous("P(receiving surgery/hormones)",lim=c(0,1),expand=c(0,0))
   q <- q + scale_x_continuous("Years from first F64.0/8/9 diagnosis",lim=c(0,5))
-  q <- q + labs(caption="\nAnalysis only shows people who received surgery/hormones after First F64.0/8/9 diagnosis.\nFirst F64.0/8/9 diagnosis between 2006-01-01 and 2014-12-31, first surgery/hormones between 2006-01-01 and 2016-12-31.")
+  q <- q + labs(caption="\nAnalysis only shows people who received surgery/hormones after first F64.0/8/9 diagnosis.\nFirst F64.0/8/9 diagnosis between 2006-01-01 and 2014-12-31, first surgery/hormones between 2006-01-01 and 2016-12-31.")
   q <- q + theme_fhi_lines()
   SaveA4(
     q, 
@@ -33,7 +33,7 @@ time_to_diagnosis <- function(d){
                   fill=cat))
   q <- q + geom_histogram(alpha=0.5,bins=50)
   q <- q + scale_fill_brewer("",palette="Set1")
-  q <- q + scale_y_continuous("Number of people")
+  q <- q + scale_y_continuous("Number of people",expand=c(0,0))
   q <- q + scale_x_continuous("Years from first F64.0/8/9 diagnosis")
   q <- q + labs(caption="\nAnalysis only shows people who received surgery/hormones.\nFirst F64.0/8/9 diagnosis between 2006-01-01 and 2014-12-31, first surgery/hormones between 2006-01-01 and 2016-12-31.")
   q <- q + theme_fhi_lines()
