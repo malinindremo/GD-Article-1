@@ -3,7 +3,7 @@ LossOfPeopleTreatments <- function(d, type="treatments"){
   var <- glue::glue("c_analysisCat_{type}")
   
   if(type=="treatments"){
-    varSexChange <- "hadSexChange_le2005_06_30"
+    varSexChange <- "hadSexChange_le2006_01_01"
   } else {
     varSexChange <- "hadSexChange_le2000_12_31"
   }
@@ -11,23 +11,23 @@ LossOfPeopleTreatments <- function(d, type="treatments"){
   if(type=="treatments"){
     res <- d[is.na(get(var_withicd89_sexchange)) & 
       numF64_089>=1 & 
-      dateFirst_F64_089>="2005-07-01" &
+      dateFirst_F64_089>="2006-01-01" &
       dateFirst_F64_089<="2016-12-31",
       .(
-        isHormone_2005_07_to_2016_12=sum(isHormone_2005_07_to_2016_12),
-        isHormoneMTF_2005_07_to_2016_12=sum(isHormoneMTF_2005_07_to_2016_12),
-        isHormoneFTM_2005_07_to_2016_12=sum(isHormoneFTM_2005_07_to_2016_12),
-        isHormonePubBlock_2005_07_to_2016_12=sum(isHormonePubBlock_2005_07_to_2016_12),
-        isSurgicalMasectomy_2005_07_to_2016_12=sum(isSurgicalMasectomy_2005_07_to_2016_12),
-        isSurgicalPenisTestProsth_2005_07_to_2016_12=sum(isSurgicalPenisTestProsth_2005_07_to_2016_12),
-        isSurgicalReconstVag_2005_07_to_2016_12=sum(isSurgicalReconstVag_2005_07_to_2016_12),
-        isSurgicalPenisAmp_2005_07_to_2016_12=sum(isSurgicalPenisAmp_2005_07_to_2016_12),
-        num_people_isSurgicalOrHormonal_2005_07_to_2016_12=sum(
-          isHormone_2005_07_to_2016_12 |
-          isSurgicalMasectomy_2005_07_to_2016_12 |
-          isSurgicalPenisTestProsth_2005_07_to_2016_12 |
-          isSurgicalReconstVag_2005_07_to_2016_12 |
-          isSurgicalPenisAmp_2005_07_to_2016_12
+        isHormone_2006_01_to_2016_12=sum(isHormone_2006_01_to_2016_12),
+        isHormoneMTF_2006_01_to_2016_12=sum(isHormoneMTF_2006_01_to_2016_12),
+        isHormoneFTM_2006_01_to_2016_12=sum(isHormoneFTM_2006_01_to_2016_12),
+        isHormonePubBlock_2006_01_to_2016_12=sum(isHormonePubBlock_2006_01_to_2016_12),
+        isSurgicalMasectomy_2006_01_to_2016_12=sum(isSurgicalMasectomy_2006_01_to_2016_12),
+        isSurgicalPenisTestProsth_2006_01_to_2016_12=sum(isSurgicalPenisTestProsth_2006_01_to_2016_12),
+        isSurgicalReconstVag_2006_01_to_2016_12=sum(isSurgicalReconstVag_2006_01_to_2016_12),
+        isSurgicalPenisAmp_2006_01_to_2016_12=sum(isSurgicalPenisAmp_2006_01_to_2016_12),
+        num_people_isSurgicalOrHormonal_2006_01_to_2016_12=sum(
+          isHormone_2006_01_to_2016_12 |
+          isSurgicalMasectomy_2006_01_to_2016_12 |
+          isSurgicalPenisTestProsth_2006_01_to_2016_12 |
+          isSurgicalReconstVag_2006_01_to_2016_12 |
+          isSurgicalPenisAmp_2006_01_to_2016_12
         )
       ),
       keyby=.(
