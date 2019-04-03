@@ -1,6 +1,7 @@
 time_to_diagnosis <- function(d){
   pd <- d[
-    dateFirst_F64_089 >= "2006-01-01" & 
+      excluded_treatments %in% c("No","Hormones/surgery before F64.0/8/9 diag") &
+      dateFirst_F64_089 >= "2006-01-01" & 
       dateFirst_F64_089 <= "2014-12-31" &
       c_analysisCat_treatments_years_to_first_date_of_surgery_hormones>=0
     ]
@@ -24,10 +25,14 @@ time_to_diagnosis <- function(d){
       "time_to_hormones_surgery_survival.png"
     ))
   
-  pd <- d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31"] 
+  pd <- d[
+    excluded_treatments %in% c("No","Hormones/surgery before F64.0/8/9 diag") &
+    dateFirst_F64_089 >= "2006-01-01" &
+    dateFirst_F64_089 <= "2014-12-31"
+    ]
   pd[,cat:="No hormones/surgery"]
   pd[c_analysisCat_treatments=="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]",cat:="Hormones/surgery after diagnosis"]
-  pd[c_analysisCat_treatments=="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31], H/S BEFORE F64_089",cat:="Hormones/surgery before diagnosis"]
+  pd[c_analysisCat_treatments=="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]" & excluded_treatments=="Hormones/surgery before F64.0/8/9 diag",cat:="Hormones/surgery before diagnosis"]
   q <- ggplot(pd,
               aes(x=c_analysisCat_treatments_years_to_first_date_of_surgery_hormones,
                   fill=cat))
@@ -46,6 +51,7 @@ time_to_diagnosis <- function(d){
     ))
   
   ugly_table <- d[
+    excluded_treatments %in% c("No","Hormones/surgery before F64.0/8/9 diag") &
     dateFirst_F64_089 >= "2006-01-01" & 
     dateFirst_F64_089 <= "2014-12-31"
     ,.(
@@ -96,7 +102,16 @@ time_to_diagnosis <- function(d){
     years_to_F64_089_10_p75=quantile(years_to_F64_089_10,probs = 0.75,na.rm=T),
     years_to_surgery_hormones_p75=quantile(c_analysisCat_treatments_years_to_first_date_of_surgery_hormones,probs = 0.75,na.rm=T)
     
-  ),keyby=.(c_analysisCat_treatments)]
+  ),keyby=.(
+    excluded_treatments,
+    c_analysisCat_treatments)]
+  
+  ugly_table[,cat:="No hormones/surgery"]
+  ugly_table[c_analysisCat_treatments=="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]",cat:="Hormones/surgery after diagnosis"]
+  ugly_table[c_analysisCat_treatments=="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]" & excluded_treatments=="Hormones/surgery before F64.0/8/9 diag",cat:="Hormones/surgery before diagnosis"]
+  
+  ugly_table[,excluded_treatments:=NULL]
+  ugly_table[,c_analysisCat_treatments:=NULL]
   
   ugly_table <- melt(
     ugly_table,
@@ -111,10 +126,6 @@ time_to_diagnosis <- function(d){
   ugly_table[variable=="11th F64.0/8/9",variable:="Surgery/hormones"]
   
   ugly_table[,variable:=factor(variable,levels=unique(variable))]
-  
-  ugly_table[,cat:="No hormones/surgery"]
-  ugly_table[c_analysisCat_treatments=="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]",cat:="Hormones/surgery after diagnosis"]
-  ugly_table[c_analysisCat_treatments=="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31], H/S BEFORE F64_089",cat:="Hormones/surgery before diagnosis"]
   
   openxlsx::write.xlsx(
     ugly_table, 

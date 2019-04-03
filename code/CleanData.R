@@ -362,7 +362,7 @@ CleanData <- function(){
   ####
   # analysis cats
   # F64_089 + treatments
-  d[,c_analysisCat_treatments_withicd89_sexchange:=as.character(NA)]
+  d[,c_analysisCat_treatments:=as.character(NA)]
   d[,c_analysisDate_treatments:=dateFirst_F64_089]
   
   # hormones
@@ -372,7 +372,7 @@ CleanData <- function(){
       c_dateFirstHormone>="2006-01-01" & 
       c_dateFirstHormone<="2016-12-31",
     
-    c_analysisCat_treatments_withicd89_sexchange:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
+    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
   ]
   
   # masectomy
@@ -382,7 +382,7 @@ CleanData <- function(){
       c_dateFirst_SurgicalMasectomy>="2006-01-01" & 
       c_dateFirst_SurgicalMasectomy<="2016-12-31",
     
-    c_analysisCat_treatments_withicd89_sexchange:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
+    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
     ]
   
   # penisamp
@@ -392,7 +392,7 @@ CleanData <- function(){
       c_dateFirst_SurgicalPenisAmp>="2006-01-01" & 
       c_dateFirst_SurgicalPenisAmp<="2016-12-31",
     
-    c_analysisCat_treatments_withicd89_sexchange:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
+    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
     ]
   
   # reconstvag
@@ -402,7 +402,7 @@ CleanData <- function(){
       c_dateFirst_SurgicalReconstVag>="2006-01-01" & 
       c_dateFirst_SurgicalReconstVag<="2016-12-31",
     
-    c_analysisCat_treatments_withicd89_sexchange:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
+    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
     ]
   
   # penistestprosth
@@ -412,12 +412,8 @@ CleanData <- function(){
       c_dateFirst_SurgicalPenisTestProsth>="2006-01-01" & 
       c_dateFirst_SurgicalPenisTestProsth<="2016-12-31",
     
-    c_analysisCat_treatments_withicd89_sexchange:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
+    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
     ]
-  
-  d[,c_analysisCat_treatments:=c_analysisCat_treatments_withicd89_sexchange]
-  d[hadTranssexual_ICD_89==TRUE,c_analysisCat_treatments:=NA]
-  d[hadSexChange_le2006_01_01==TRUE,c_analysisCat_treatments:=NA]
   
   d[is.na(c_analysisCat_treatments), c_analysisDate_treatments:=NA]
   
@@ -469,27 +465,21 @@ CleanData <- function(){
       c_dateFirst_SurgicalPenisTestProsth <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
     c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalPenisTestProsth]
   
-  # identify people who got treatments before diagnosis
-  d[!is.na(c_analysisCat_treatments) & c_analysisCat_treatments_first_date_of_surgery_hormones<c_analysisDate_treatments, c_analysisCat_treatments:= "numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31], H/S BEFORE F64_089"]
-  
   
   d[!is.na(c_analysisCat_treatments_first_date_of_surgery_hormones),c_analysisCat_treatments_years_to_first_date_of_surgery_hormones:=as.numeric(difftime(c_analysisCat_treatments_first_date_of_surgery_hormones,dateFirst_F64_089,units="days"))/365.25]
+  
   
   ####
   # analysis cats
   # F64_089
-  d[,c_analysisCat_diag_withicd89_sexchange:=as.character(NA)]
+  d[,c_analysisCat_diag:=as.character(NA)]
   d[,c_analysisDate_diag:=dateFirst_F64_089]
   d[
     numF64_089>=4 & 
     dateFirst_F64_089>="2001-01-01" &
     dateFirst_F64_089<="2016-12-31",
-    c_analysisCat_diag_withicd89_sexchange:="numF64_089>=4, first diag: [2001-01-01, 2016-12-31]"
+    c_analysisCat_diag:="numF64_089>=4, first diag: [2001-01-01, 2016-12-31]"
    ]
-  
-  d[,c_analysisCat_diag:=c_analysisCat_diag_withicd89_sexchange]
-  d[hadTranssexual_ICD_89==TRUE,c_analysisCat_diag:=NA]
-  d[hadSexChange_le2000_12_31==TRUE,c_analysisCat_diag:=NA]
   
   d[is.na(c_analysisCat_diag), c_analysisDate_diag:=NA]
   
@@ -498,6 +488,31 @@ CleanData <- function(){
   d[,c_analysisAgeCat_diag:=cut(c_analysisAge_diag,breaks = c(0,18,30,50,200),include.lowest = T)]
   xtabs(~d$c_analysisCat_diag+d$c_analysisYear_diag)
   xtabs(~d$c_analysisAgeCat_diag)
+  
+  # #### exclusions
+  d[,excluded_treatments:="No"]
+  d[excluded_treatments=="No" & hadTranssexual_ICD_89==TRUE,excluded_treatments:="ICD8/9"]
+  d[excluded_treatments=="No" & hadSexChange_le2006_01_01==TRUE,excluded_treatments:="Legal sex change"]
+  d[excluded_treatments=="No" & c_analysisCat_treatments_first_date_of_surgery_hormones<c_analysisDate_treatments,excluded_treatments:="Hormones/surgery before F64.0/8/9 diag"]
+  d[,excluded_treatments:=factor(excluded_treatments,levels=c(
+    "No",
+    "ICD8/9",
+    "Legal sex change",
+    "Hormones/surgery before F64.0/8/9 diag"
+  ))]
+  xtabs(~d$excluded_treatments)
+  xtabs(~d$excluded_treatments+d$c_analysisCat_treatments)
+  
+  d[,excluded_diag:="No"]
+  d[excluded_diag=="No" & hadTranssexual_ICD_89==TRUE,excluded_diag:="ICD8/9"]
+  d[excluded_diag=="No" & hadSexChange_le2000_12_31==TRUE,excluded_diag:="Legal sex change"]
+  d[,excluded_diag:=factor(excluded_diag,levels=c(
+    "No",
+    "ICD8/9",
+    "Legal sex change"
+  ))]
+  xtabs(~d$excluded_diag)
+  
   
   # dateFirst_F64_089
   xtabs(~d$numF64_089_2006_01_to_2014_12,addNA=T)

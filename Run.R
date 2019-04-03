@@ -24,7 +24,7 @@ org::InitialiseProject(
     fs::path("/Users","Georgios","Filr","Shared with Me","Malin-results")
   ),
   DATA_RAW = c(
-    fs::path("/Volumes","crypt_data","org","data_raw","code_minor","2018","GD-Article-1"),
+    fs::path("/data","org","data_raw","code_minor","2018","GD-Article-1"),
     fs::path("/Users","malin976","Documents","Article-1-data"),
     fs::path("/Volumes","KonsdysforiregisterKaramanis")
   )
@@ -54,14 +54,14 @@ time_to_diagnosis(d)
 Validate_1(d, byvar="c_analysisCat_F64_089_ge4")
 Validate_1(d, byvar="c_analysisCat_F64_089_ge10")
 
-dz <- d[!is.na(c_analysisCat_treatments)]
+dz <- d[!is.na(c_analysisCat_treatments) & excluded_treatments=="No"]
 nrow(dz)
 dz[,analysisCat_z:=c_analysisCat_treatments]
 dz[,analysisYear_z:=c_analysisYear_treatments]
 dz[,analysisAgeCat_z:=c_analysisAgeCat_treatments]
 Analyses_1(dz,pop=GetPop(), folder="analyses_treatments")
 
-dz <- d[!is.na(c_analysisCat_diag)]
+dz <- d[!is.na(c_analysisCat_diag) & excluded_diag=="No"]
 dz[,analysisCat_z:=c_analysisCat_diag]
 dz[,analysisYear_z:=c_analysisYear_diag]
 dz[,analysisAgeCat_z:=c_analysisAgeCat_diag]

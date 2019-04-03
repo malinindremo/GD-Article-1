@@ -1,6 +1,7 @@
 
 Validate_1 <- function(d,byvar){
-  res <- d[,
+  d[,xbyvar:=get(byvar)]
+  res <- d[excluded_treatments=="No",
            .(
              N=.N,
              c_isHormone_2006_01_to_2016_12=sum(c_isHormone_2006_01_to_2016_12),
@@ -26,7 +27,7 @@ Validate_1 <- function(d,byvar){
            ),
            keyby=.(
              bornSex,
-             category=get(byvar)
+             category=xbyvar
            )]
   res[,perc_people_c_isSurgicalOrHormonal_2006_01_to_2016_12:=round(100*num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12/N,1)]
   
@@ -35,5 +36,7 @@ Validate_1 <- function(d,byvar){
   
   openxlsx::write.xlsx(res, file=
                          fs::path(org::PROJ$SHARED_TODAY,"validation",glue::glue("Validate_{byvar}.xlsx")))
+  
+  d[,xbyvar:=NULL]
   
 }
