@@ -3,15 +3,16 @@ LossOfPeopleTreatments <- function(d, type="treatments"){
   
   if(type=="treatments"){
     d[,excluded:=excluded_treatments]
-    d[,var:=c_analysisCat_treatments]
+    #d[,var:=c_analysisCat_treatments]
     varSexChange <- "hadSexChange_le2006_01_01"
   } else {
     d[,excluded:=excluded_diag]
-    d[,var:=c_analysisCat_diag]
+    #d[,var:=c_analysisCat_diag]
     varSexChange <- "hadSexChange_le2000_12_31"
   }
   
   if(type=="treatments"){
+
     res <- d[excluded=="No" &
                numF64_089>=1 & 
                dateFirst_F64_089>="2006-01-01" &
@@ -23,10 +24,10 @@ LossOfPeopleTreatments <- function(d, type="treatments"){
         wrong_isSurgicalReconstVag_2006_01_to_2016_12=sum(isSurgicalReconstVag_2006_01_to_2016_12 & !c_isSurgicalReconstVag_2006_01_to_2016_12),
         wrong_isSurgicalPenisAmp_2006_01_to_2016_12=sum(isSurgicalPenisAmp_2006_01_to_2016_12 & !c_isSurgicalPenisAmp_2006_01_to_2016_12)
       ),
-      keyby=.(
+      keyby=eval(
         var,
-        bornSex,
-        excluded
+        "bornSex",
+        "excluded"
       )]
     res
     

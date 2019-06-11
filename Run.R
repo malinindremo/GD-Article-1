@@ -19,7 +19,7 @@ org::InitialiseProject(
     fs::path("/Users","Georgios","Documents","Research-Malin","GD-Article-1")
   ),
   SHARED = c(
-    fs::path("/Filr", "Shared with Me", "Gender dysphoria -shared folder", "results"),
+    fs::path("/filr", "Shared with Me", "Gender dysphoria -shared folder", "results"),
     fs::path("/Users","malin976","Filr","Mina filer","Gender dysphoria -shared folder", "results"),
     fs::path("/Users","Georgios","Filr","Shared with Me","Malin-results")
   ),
@@ -30,11 +30,13 @@ org::InitialiseProject(
   )
 )
 
-fs::dir_create(file.path(org::PROJ$SHARED_TODAY,"descriptives"))
-fs::dir_create(file.path(org::PROJ$SHARED_TODAY,"validation"))
-fs::dir_create(file.path(org::PROJ$SHARED_TODAY,"analyses_diag"))
-fs::dir_create(file.path(org::PROJ$SHARED_TODAY,"analyses_treatments"))
-fs::dir_create(file.path(org::PROJ$SHARED_TODAY,"hormones_surgeries_before_diagnosis"))
+fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"descriptives"))
+fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"validation"))
+fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"analyses_diag"))
+fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"analyses_treatments"))
+fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"analyses_hybrid"))
+fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"analyses_together"))
+fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"hormones_surgeries_before_diagnosis"))
 
 ################
 # Load libraries
@@ -43,13 +45,12 @@ fs::dir_create(file.path(org::PROJ$SHARED_TODAY,"hormones_surgeries_before_diagn
 library(data.table)
 library(ggplot2)
 
-d <- CleanData()
+d <- CleanDataIncidentGD()
+d[LopNr == 20842]
 LossOfPeopleTreatments(d,type = "treatments")
 LossOfPeopleTreatments(d,type = "diag")
 
 time_to_diagnosis(d)
-
-
 
 Validate_1(d, byvar="c_analysisCat_F64_089_ge4")
 Validate_1(d, byvar="c_analysisCat_F64_089_ge10")
@@ -67,7 +68,23 @@ dz[,analysisYear_z:=c_analysisYear_diag]
 dz[,analysisAgeCat_z:=c_analysisAgeCat_diag]
 Analyses_1(dz,pop=GetPop(), folder="analyses_diag")
 
+dz <- d[!is.na(c_analysisCat_hybrid) & excluded_hybrid=="No"]
+dz[,analysisCat_z:=c_analysisCat_hybrid]
+dz[,analysisYear_z:=c_analysisYear_hybrid]
+dz[,analysisAgeCat_z:=c_analysisAgeCat_hybrid]
+Analyses_1(dz,pop=GetPop(), folder="analyses_hybrid")
+
+dz <- d[!is.na(c_analysisCat_hybrid) & excluded_hybrid=="No"]
+analyses_together(dz,pop=GetPop(), folder="analyses_together")
+
+
+
 # end?
+
+
+
+
+
 
 ugly_table <- d[!is.na(c_analysisYear_treatments),.(
     N=.N,

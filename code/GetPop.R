@@ -7,7 +7,7 @@ GetPop <- function(){
   pop[,ageCat:=cut(as.numeric(age),breaks = c(0,18,30,50,200),include.lowest = T)]
   pop[,ageCat:=as.character(ageCat)]
   pop[,isBornMale:=sex=="men"]
-  pop[,bornSex:=ifelse(isBornMale,"Born Male","Born Female")]
+  pop[,bornSex:=ifelse(isBornMale,"Assigned male","Assigned female")]
   
   pop0 <- pop[,.(
     pop=sum(pop)

@@ -181,3 +181,41 @@ Analyses_1 <- function(dz, pop, folder){
   
   
 }
+
+
+
+analyses_together <- function(dz, pop, folder){
+  agg <- dz[,
+            .(
+              `Diagnoses (4+)`=sum(!is.na(c_analysisCat_diag)),
+              `Diagnosis + treatment`=sum(!is.na(c_analysisCat_treatments)),
+              Hybrid=sum(!is.na(c_analysisCat_hybrid))
+            ),keyby=.(
+              bornSex,
+              c_analysisYear_hybrid
+            )][CJ(unique(dz$bornSex),
+                  unique(dz$c_analysisYear_hybrid))
+               ,allow.cartesian= TRUE]
+  
+  agg[c_analysisYear_hybrid<=2005,`Diagnosis + treatment`:=NA]
+  
+  xlsx::write.xlsx(agg,
+                   fs::path(org::PROJ$SHARED_TODAY,folder,"raw_numbers.xlsx"))
+  
+  long <- melt.data.table(agg, id.vars=c("bornSex","c_analysisYear_hybrid"))
+  
+  q <- ggplot(long,aes(x=c_analysisYear_hybrid,y=value,colour=variable))
+  q <- q + geom_line()
+  q <- q + geom_point()
+  q <- q + scale_color_brewer("",palette="Set1")
+  q <- q + scale_x_continuous("Year",
+                              breaks=seq(2001,2020,2))
+  q <- q + scale_y_continuous("Number of people")
+  q <- q + expand_limits(y=0)
+  q <- q + facet_wrap(~bornSex)
+  q <- q + theme_gray(16)
+  q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+  q
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex.png"))
+  
+}

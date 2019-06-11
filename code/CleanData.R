@@ -5,7 +5,7 @@ OverwriteWithEarlist <- function(d,rows,resVarDate,resVarCat,valVarDate,valCat){
   d[rows,(resVarDate):=get(valVarDate)]
 }
 
-CleanData <- function(){
+CleanDataIncidentGD <- function(){
   
   ov <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","ov.sas7bdat")))
   sv <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","sv.sas7bdat")))
@@ -13,7 +13,7 @@ CleanData <- function(){
   demografi <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","demografi.sas7bdat")))
   sex <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","kon.sas7bdat")))
   sex[,isBornMale:=kon==1]
-  sex[,bornSex:=ifelse(isBornMale,"Born Male","Born Female")]
+  sex[,bornSex:=ifelse(isBornMale,"Assigned male","Assigned female")]
   sex[,kon:=NULL]
   
  
@@ -146,6 +146,21 @@ CleanData <- function(){
   patients[,isF64_89:=FALSE]
   patients[,isTranssexual_ICD_89:=FALSE]
   patients[,isCodeUsedWithSurgery:=FALSE]
+  
+  patients[, isF00_to_F99:=FALSE]
+  patients[, isF70_to_F79:=FALSE]
+  patients[, isF80_R47:=FALSE]
+  patients[, isF20_to_F29:=FALSE]
+  patients[, isF30_to_F31:=FALSE]
+  patients[, isF32_to_F33:=FALSE]
+  patients[, isF50:=FALSE]
+  patients[, isF84:=FALSE]
+  patients[, isF90:=FALSE]
+  patients[, isF91_to_F98:=FALSE]
+  patients[, isF40_to_F48:=FALSE]
+  patients[, isF10_to_F16_F18_F19:=FALSE]
+  patients[, isF60:=FALSE]
+  patients[, isX60_to_X84:=FALSE]
   for(i in c("HDIA",stringr::str_subset(names(patients), "^DIA"))){
     patients[stringr::str_detect(get(i),"^F640"), isF64_0:=TRUE]
     patients[stringr::str_detect(get(i),"^F648"), isF64_89:=TRUE]
@@ -164,6 +179,34 @@ CleanData <- function(){
     patients[stringr::str_detect(get(i),"^Q555"), isCodeUsedWithSurgery:=TRUE]
     patients[stringr::str_detect(get(i),"^Q550"), isCodeUsedWithSurgery:=TRUE]
     patients[stringr::str_detect(get(i),"^Q555"), isCodeUsedWithSurgery:=TRUE]
+   
+    # any psychiatric disorder 
+    #ICD10
+    patients[stringr::str_detect(get(i),"^F"), isF00_to_F99:=TRUE]
+    #ICD9: 290-319 
+    patients[stringr::str_detect(get(i),"^29[0-9]"), isF00_to_F99:=TRUE]
+    patients[stringr::str_detect(get(i),"^3[0-1][0-9]"), isF00_to_F99:=TRUE]
+    #ICD8: 290-315
+    
+    patients[stringr::str_detect(get(i),"^F7"), isF70_to_F79:=TRUE]
+    
+    patients[stringr::str_detect(get(i),"^F80"), isF80_R47:=TRUE]
+    patients[stringr::str_detect(get(i),"^R47"), isF80_R47:=TRUE]
+    
+    patients[stringr::str_detect(get(i),"^F2"), isF20_to_F29:=TRUE]
+    patients[stringr::str_detect(get(i),"^F3[01]"), isF30_to_F31:=TRUE]
+    patients[stringr::str_detect(get(i),"^F3[23]"), isF32_to_F33:=TRUE]
+    patients[stringr::str_detect(get(i),"^F50"), isF50:=TRUE]
+    patients[stringr::str_detect(get(i),"^F84"), isF84:=TRUE]
+    patients[stringr::str_detect(get(i),"^F90"), isF90:=TRUE]
+    patients[stringr::str_detect(get(i),"^F9[1-8]"), isF91_to_F98:=TRUE]
+    patients[stringr::str_detect(get(i),"^F4[0-8]"), isF40_to_F48:=TRUE]
+    patients[stringr::str_detect(get(i),"^F1[0-689]"), isF10_to_F16_F18_F19:=TRUE]
+    patients[stringr::str_detect(get(i),"^F60"), isF60:=TRUE]
+    
+    patients[stringr::str_detect(get(i),"^X[67]"), isX60_to_X84:=TRUE]
+    patients[stringr::str_detect(get(i),"^X8[0-4]"), isX60_to_X84:=TRUE]
+    
   }
   patients[,isF64_089:=isF64_0 | isF64_89]
   
@@ -280,7 +323,22 @@ CleanData <- function(){
     dateFirst_SurgicalPenisAmp=min(INDATUM[isSurgicalPenisAmp==TRUE]),
     
     isSurgicalPenisTestProsth_2006_01_to_2016_12=as.logical(max(isSurgicalPenisTestProsth_2006_01_to_2016_12)),
-    dateFirst_SurgicalPenisTestProsth=min(INDATUM[isSurgicalPenisTestProsth==TRUE])
+    dateFirst_SurgicalPenisTestProsth=min(INDATUM[isSurgicalPenisTestProsth==TRUE]),
+    
+    dateFirst_F00_to_F99=min(INDATUM[isF00_to_F99==T]),
+    dateFirst_F70_to_F79=min(INDATUM[isF70_to_F79==T]),
+    dateFirst_F80_R47=min(INDATUM[isF80_R47==T]),
+    dateFirst_F20_to_F29=min(INDATUM[isF20_to_F29==T]),
+    dateFirst_F30_to_F31=min(INDATUM[isF30_to_F31==T]),
+    dateFirst_F32_to_F33=min(INDATUM[isF32_to_F33==T]),
+    dateFirst_F50=min(INDATUM[isF50==T]),
+    dateFirst_F84=min(INDATUM[isF84==T]),
+    dateFirst_F90=min(INDATUM[isF90==T]),
+    dateFirst_F91_to_F98=min(INDATUM[isF91_to_F98==T]),
+    dateFirst_F40_to_F48=min(INDATUM[isF40_to_F48==T]),
+    dateFirst_F10_to_F16_F18_F19=min(INDATUM[isF10_to_F16_F18_F19==T]),
+    dateFirst_F60=min(INDATUM[isF60==T]),
+    dateFirst_X60_to_X84=min(INDATUM[isX60_to_X84==T])
   ), by=.(
     LopNr
   )]
@@ -489,10 +547,26 @@ CleanData <- function(){
   xtabs(~d$c_analysisCat_diag+d$c_analysisYear_diag)
   xtabs(~d$c_analysisAgeCat_diag)
   
+  
+  ## HYBRID
+  d[,c_analysisCat_hybrid:=as.character(NA)]
+  d[,c_analysisDate_hybrid:=dateFirst_F64_089]
+  d[!is.na(c_analysisCat_diag) | !is.na(c_analysisCat_treatments),
+    c_analysisCat_hybrid:="Hybrid"]
+  d[is.na(c_analysisCat_hybrid), c_analysisDate_hybrid:=NA]
+  
+  d[,c_analysisYear_hybrid:=YearN(c_analysisDate_hybrid)]
+  d[,c_analysisAge_hybrid:=as.numeric(difftime(c_analysisDate_hybrid,dob,units="days"))/365.25]
+  d[,c_analysisAgeCat_hybrid:=cut(c_analysisAge_hybrid,breaks = c(0,18,30,50,200),include.lowest = T)]
+  xtabs(~d$c_analysisCat_hybrid+d$c_analysisYear_hybrid)
+  xtabs(~d$c_analysisAgeCat_hybrid)
+  
+  
   # #### exclusions
   d[,excluded_treatments:="No"]
   d[excluded_treatments=="No" & hadTranssexual_ICD_89==TRUE,excluded_treatments:="ICD8/9"]
-  d[excluded_treatments=="No" & hadSexChange_le2006_01_01==TRUE,excluded_treatments:="Legal sex change"]
+  d[excluded_treatments=="No" & dateSexChange<dateFirst_F64_089,excluded_treatments:="Legal sex change"]
+  d[excluded_treatments=="No" & is.na(dateFirst_F64_089) & !is.na(dateSexChange),excluded_treatments:="Legal sex change"]
   d[excluded_treatments=="No" & c_analysisCat_treatments_first_date_of_surgery_hormones<c_analysisDate_treatments,excluded_treatments:="Hormones/surgery before F64.0/8/9 diag"]
   d[,excluded_treatments:=factor(excluded_treatments,levels=c(
     "No",
@@ -505,13 +579,17 @@ CleanData <- function(){
   
   d[,excluded_diag:="No"]
   d[excluded_diag=="No" & hadTranssexual_ICD_89==TRUE,excluded_diag:="ICD8/9"]
-  d[excluded_diag=="No" & hadSexChange_le2000_12_31==TRUE,excluded_diag:="Legal sex change"]
+  d[excluded_diag=="No" & dateSexChange<dateFirst_F64_089,excluded_diag:="Legal sex change"]
+  d[excluded_diag=="No" & is.na(dateFirst_F64_089) & !is.na(dateSexChange),excluded_diag:="Legal sex change"]
   d[,excluded_diag:=factor(excluded_diag,levels=c(
     "No",
     "ICD8/9",
     "Legal sex change"
   ))]
   xtabs(~d$excluded_diag)
+  
+  xtabs(~d$excluded_treatments+d$excluded_diag)
+  d[,excluded_hybrid:=excluded_treatments]
   
   
   # dateFirst_F64_089
