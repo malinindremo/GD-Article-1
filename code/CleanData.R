@@ -615,6 +615,47 @@ CleanDataIncidentGD <- function(){
   xtabs(~d$c_analysisCat_F64_089_ge10,addNA=T)
   xtabs(~d$c_analysisCat_F64_089_ge4,addNA=T)
   
+  # defining comorbidity
+  #d[dateFirst_F00_to_F99
+  d[,comorbid_F70_to_F79:=dateFirst_F70_to_F79<c_analysisDate_hybrid]
+  d[is.na(comorbid_F70_to_F79),comorbid_F70_to_F79:=FALSE]
+  
+  d[,comorbid_F80_R47:=dateFirst_F80_R47<c_analysisDate_hybrid]
+  d[is.na(comorbid_F80_R47),comorbid_F80_R47:=FALSE]
+  
+  d[,comorbid_F20_to_F29:=dateFirst_F20_to_F29<c_analysisDate_hybrid]
+  d[is.na(comorbid_F20_to_F29),comorbid_F20_to_F29:=FALSE]
+  
+  d[,comorbid_F30_to_F31:=dateFirst_F30_to_F31<c_analysisDate_hybrid]
+  d[is.na(comorbid_F30_to_F31),comorbid_F30_to_F31:=FALSE]
+  
+  d[,comorbid_F32_to_F33:=dateFirst_F32_to_F33<c_analysisDate_hybrid]
+  d[is.na(comorbid_F32_to_F33),comorbid_F32_to_F33:=FALSE]
+  
+  d[,comorbid_F50:=dateFirst_F50<c_analysisDate_hybrid]
+  d[is.na(comorbid_F50),comorbid_F50:=FALSE]
+  
+  d[,comorbid_F84:=dateFirst_F84<(c_analysisDate_hybrid+365*2)] # ASD
+  d[is.na(comorbid_F84),comorbid_F84:=FALSE]
+  
+  d[,comorbid_F90:=dateFirst_F90<(c_analysisDate_hybrid+365*2)] #ADHD
+  d[is.na(comorbid_F90),comorbid_F90:=FALSE]
+  
+  d[,comorbid_F91_to_F98:=dateFirst_F91_to_F98<c_analysisDate_hybrid]
+  d[is.na(comorbid_F91_to_F98),comorbid_F91_to_F98:=FALSE]
+  
+  d[,comorbid_F40_to_F48:=dateFirst_F40_to_F48<c_analysisDate_hybrid]
+  d[is.na(comorbid_F40_to_F48),comorbid_F40_to_F48:=FALSE]
+  
+  d[,comorbid_F10_to_F16_F18_F19:=dateFirst_F10_to_F16_F18_F19<c_analysisDate_hybrid]
+  d[is.na(comorbid_F10_to_F16_F18_F19),comorbid_F10_to_F16_F18_F19:=FALSE]
+  
+  d[,comorbid_F60:=dateFirst_F60<c_analysisDate_hybrid]
+  d[is.na(comorbid_F60),comorbid_F60:=FALSE]
+  
+  d[,comorbid_X60_to_X84:=dateFirst_X60_to_X84<c_analysisDate_hybrid]
+  d[is.na(comorbid_X60_to_X84),comorbid_X60_to_X84:=FALSE]
+  
   return(d)
 }
 
