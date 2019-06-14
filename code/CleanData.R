@@ -161,14 +161,15 @@ CleanDataIncidentGD <- function(){
   patients[, isF10_to_F16_F18_F19:=FALSE]
   patients[, isF60:=FALSE]
   patients[, isX60_to_X84:=FALSE]
+  # 1973–1988 (ICD-8), 1987– 1998 (ICD-9) and 1996 onwards (ICD-10).
   for(i in c("HDIA",stringr::str_subset(names(patients), "^DIA"))){
     patients[stringr::str_detect(get(i),"^F640"), isF64_0:=TRUE]
     patients[stringr::str_detect(get(i),"^F648"), isF64_89:=TRUE]
     patients[stringr::str_detect(get(i),"^F649"), isF64_89:=TRUE]
     
+    patients[stringr::str_detect(get(i),"^302[A-Z]"),isTranssexual_ICD_89:=TRUE]
     patients[get(i)=="302,31",isTranssexual_ICD_89:=TRUE]
     patients[get(i)=="302,99",isTranssexual_ICD_89:=TRUE]
-    patients[get(i)=="302X",isTranssexual_ICD_89:=TRUE]
     
     patients[stringr::str_detect(get(i),"^F640"), isCodeUsedWithSurgery:=TRUE]
     patients[stringr::str_detect(get(i),"^F648"), isCodeUsedWithSurgery:=TRUE]
@@ -180,33 +181,168 @@ CleanDataIncidentGD <- function(){
     patients[stringr::str_detect(get(i),"^Q550"), isCodeUsedWithSurgery:=TRUE]
     patients[stringr::str_detect(get(i),"^Q555"), isCodeUsedWithSurgery:=TRUE]
    
-    # any psychiatric disorder 
-    #ICD10
-    patients[stringr::str_detect(get(i),"^F"), isF00_to_F99:=TRUE]
-    #ICD9: 290-319 
-    patients[stringr::str_detect(get(i),"^29[0-9]"), isF00_to_F99:=TRUE]
-    patients[stringr::str_detect(get(i),"^3[0-1][0-9]"), isF00_to_F99:=TRUE]
+    # any psychiatric disorder
+    # ICD10
+    patients[stringr::str_detect(get(i), "^F") &
+      !stringr::str_detect(get(i), "^F640") &
+      !stringr::str_detect(get(i), "^F648") &
+      !stringr::str_detect(get(i), "^F649"), isF00_to_F99 := TRUE]
+    # ICD9: 290-319
+    patients[
+      stringr::str_detect(get(i), "^29[0-9][A-Z]") &
+        !stringr::str_detect(get(i), "^302[A-Z]"),
+      isF00_to_F99 := TRUE
+    ]
+    patients[
+      stringr::str_detect(get(i), "^3[0-1][0-9][A-Z]") &
+        !stringr::str_detect(get(i), "^302[A-Z]"),
+      isF00_to_F99 := TRUE
+    ]
     #ICD8: 290-315
+    patients[
+      stringr::str_detect(get(i), "^29[0-9],") &
+        get(i)!="302,31" &
+        get(i)!="302,99",
+      isF00_to_F99 := TRUE
+      ]
+    patients[
+      stringr::str_detect(get(i), "^30[0-9],") &
+        get(i)!="302,31" &
+        get(i)!="302,99",
+      isF00_to_F99 := TRUE
+      ]
+    patients[
+      stringr::str_detect(get(i), "^31[0-5],") &
+        get(i)!="302,31" &
+        get(i)!="302,99",
+      isF00_to_F99 := TRUE
+      ]
     
+    #Intellectual disability/Mental retardation 
+    # icd10
     patients[stringr::str_detect(get(i),"^F7"), isF70_to_F79:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^31[7-9][A-Z]"), isF70_to_F79:=TRUE]
+    # icd8
+    patients[stringr::str_detect(get(i),"^31[0-5],"), isF70_to_F79:=TRUE]
     
+    # Speech and language disorders 
+    # icd10
     patients[stringr::str_detect(get(i),"^F80"), isF80_R47:=TRUE]
     patients[stringr::str_detect(get(i),"^R47"), isF80_R47:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^315D"), isF80_R47:=TRUE]
+    # icd8
+    patients[stringr::str_detect(get(i),"^360,00"), isF80_R47:=TRUE]
+    patients[stringr::str_detect(get(i),"^781,59"), isF80_R47:=TRUE]
     
+    # Psychotic disorders
+    # icd10
     patients[stringr::str_detect(get(i),"^F2"), isF20_to_F29:=TRUE]
-    patients[stringr::str_detect(get(i),"^F3[01]"), isF30_to_F31:=TRUE]
-    patients[stringr::str_detect(get(i),"^F3[23]"), isF32_to_F33:=TRUE]
-    patients[stringr::str_detect(get(i),"^F50"), isF50:=TRUE]
-    patients[stringr::str_detect(get(i),"^F84"), isF84:=TRUE]
-    patients[stringr::str_detect(get(i),"^F90"), isF90:=TRUE]
-    patients[stringr::str_detect(get(i),"^F9[1-8]"), isF91_to_F98:=TRUE]
-    patients[stringr::str_detect(get(i),"^F4[0-8]"), isF40_to_F48:=TRUE]
-    patients[stringr::str_detect(get(i),"^F1[0-689]"), isF10_to_F16_F18_F19:=TRUE]
-    patients[stringr::str_detect(get(i),"^F60"), isF60:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^29[578][A-Z]") & 
+               !stringr::str_detect(get(i),"^298A"),
+             isF20_to_F29:=TRUE]
+    # icd8
+    patients[stringr::str_detect(get(i),"^29[5789],") & 
+               !stringr::str_detect(get(i),"^298,00"),
+             isF20_to_F29:=TRUE]
     
+    # bipolar disorder
+    # icd10
+    patients[stringr::str_detect(get(i),"^F3[01]"), isF30_to_F31:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^296[A-Z]") &
+               !stringr::str_detect(get(i),"^296[BX]"), isF30_to_F31:=TRUE]
+    # icd8
+    patients[stringr::str_detect(get(i),"^296,") &
+               !stringr::str_detect(get(i),"^296,00"), isF30_to_F31:=TRUE]
+    
+    # depression
+    # icd10
+    patients[stringr::str_detect(get(i),"^F3[23]"), isF32_to_F33:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^298A"), isF32_to_F33:=TRUE]
+    patients[stringr::str_detect(get(i),"^300E"), isF32_to_F33:=TRUE]
+    patients[stringr::str_detect(get(i),"^311[A-Z]"), isF32_to_F33:=TRUE]
+    # icd8
+    patients[stringr::str_detect(get(i),"^298,00"), isF32_to_F33:=TRUE]
+    patients[stringr::str_detect(get(i),"^300,40"), isF32_to_F33:=TRUE]
+    patients[stringr::str_detect(get(i),"^790,20"), isF32_to_F33:=TRUE]
+    
+    # eating disorders
+    # icd10
+    patients[stringr::str_detect(get(i),"^F50"), isF50:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^307[BF]"), isF50:=TRUE]
+    # icd8
+    patients[stringr::str_detect(get(i),"^306,50"), isF50:=TRUE]
+    
+    # asd
+    # icd10
+    patients[stringr::str_detect(get(i),"^F84"), isF84:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^299[A-Z]"), isF84:=TRUE]
+    
+    # adhd
+    # icd10
+    patients[stringr::str_detect(get(i),"^F90"), isF90:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^F314[A-Z]"), isF90:=TRUE]
+    
+    # Other behavioral/emotional disorders with onset in childhood 
+    # icd10
+    patients[stringr::str_detect(get(i),"^F9[1-8]"), isF91_to_F98:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^F31[23][A-Z]"), isF91_to_F98:=TRUE]
+    # icd8
+    patients[stringr::str_detect(get(i),"^F308,99"), isF91_to_F98:=TRUE]
+    
+    # Neurotic, stress related or somatoform disorder 
+    # icd10
+    patients[stringr::str_detect(get(i),"^F4[0-8]"), isF40_to_F48:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^300[A-Z]") &
+               !stringr::str_detect(get(i),"^300E"), isF40_to_F48:=TRUE]
+    patients[stringr::str_detect(get(i),"^30[689][A-Z]"), isF40_to_F48:=TRUE]
+    patients[stringr::str_detect(get(i),"^307W"), isF40_to_F48:=TRUE]
+    # icd8
+    patients[stringr::str_detect(get(i),"^300,") &
+               !stringr::str_detect(get(i),"^300,40"), isF40_to_F48:=TRUE]
+    patients[stringr::str_detect(get(i),"^305,"), isF40_to_F48:=TRUE]
+    patients[stringr::str_detect(get(i),"^306,80"), isF40_to_F48:=TRUE]
+    patients[stringr::str_detect(get(i),"^306,98"), isF40_to_F48:=TRUE]
+    patients[stringr::str_detect(get(i),"^307,99"), isF40_to_F48:=TRUE]
+    
+    # Alcohol and substance use disorder 
+    # icd10
+    patients[stringr::str_detect(get(i),"^F1[0-689]"), isF10_to_F16_F18_F19:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^29[12][A-Z]"), isF10_to_F16_F18_F19:=TRUE]
+    patients[stringr::str_detect(get(i),"^30[34][A-Z]"), isF10_to_F16_F18_F19:=TRUE]
+    patients[stringr::str_detect(get(i),"^305[AX]"), isF10_to_F16_F18_F19:=TRUE]
+    # icd8
+    patients[stringr::str_detect(get(i),"^291,"), isF10_to_F16_F18_F19:=TRUE]
+    patients[stringr::str_detect(get(i),"^294,30"), isF10_to_F16_F18_F19:=TRUE]
+    patients[stringr::str_detect(get(i),"^30[34],"), isF10_to_F16_F18_F19:=TRUE]
+    patients[stringr::str_detect(get(i),"^971,"), isF10_to_F16_F18_F19:=TRUE]
+    
+    # Personality disorder
+    # icd10
+    patients[stringr::str_detect(get(i),"^F60"), isF60:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^301[A-Z]"), isF60:=TRUE]
+    # icd8
+    patients[stringr::str_detect(get(i),"^301,"), isF60:=TRUE]
+    
+    # Suicide attempt
+    # icd10
     patients[stringr::str_detect(get(i),"^X[67]"), isX60_to_X84:=TRUE]
     patients[stringr::str_detect(get(i),"^X8[0-4]"), isX60_to_X84:=TRUE]
-    
+    # icd9
+    patients[stringr::str_detect(get(i),"^E95[0-9][A-Z]"), isX60_to_X84:=TRUE]
+    # icd8
+    patients[stringr::str_detect(get(i),"^E95[0-9],"), isX60_to_X84:=TRUE]
   }
   patients[,isF64_089:=isF64_0 | isF64_89]
   
