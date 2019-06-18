@@ -156,13 +156,14 @@ CleanDataIncidentGD <- function(){
   patients[, isF50:=FALSE]
   patients[, isF84:=FALSE]
   patients[, isF90:=FALSE]
+  patients[, isF84_F90:=FALSE]
   patients[, isF91_to_F98:=FALSE]
   patients[, isF40_to_F48:=FALSE]
   patients[, isF10_to_F16_F18_F19:=FALSE]
   patients[, isF60:=FALSE]
   patients[, isX60_to_X84:=FALSE]
   # 1973–1988 (ICD-8), 1987– 1998 (ICD-9) and 1996 onwards (ICD-10).
-  for(i in c("HDIA",stringr::str_subset(names(patients), "^DIA"))){
+  for(i in c("HDIA",stringr::str_subset(names(patients), "^DIA"),stringr::str_subset(names(patients), "^EKOD"))){
     patients[stringr::str_detect(get(i),"^F640"), isF64_0:=TRUE]
     patients[stringr::str_detect(get(i),"^F648"), isF64_89:=TRUE]
     patients[stringr::str_detect(get(i),"^F649"), isF64_89:=TRUE]
@@ -289,6 +290,14 @@ CleanDataIncidentGD <- function(){
     patients[stringr::str_detect(get(i),"^F90"), isF90:=TRUE]
     # icd9
     patients[stringr::str_detect(get(i),"^F314[A-Z]"), isF90:=TRUE]
+    
+    # asd OR adhd
+    # icd10
+    patients[stringr::str_detect(get(i),"^F84"), isF84_F90:=TRUE]
+    patients[stringr::str_detect(get(i),"^F90"), isF84_F90:=TRUE]
+    # icd9
+    patients[stringr::str_detect(get(i),"^299[A-Z]"), isF84_F90:=TRUE]
+    patients[stringr::str_detect(get(i),"^F314[A-Z]"), isF84_F90:=TRUE]
     
     # Other behavioral/emotional disorders with onset in childhood 
     # icd10
@@ -470,6 +479,7 @@ CleanDataIncidentGD <- function(){
     dateFirst_F50=min(INDATUM[isF50==T]),
     dateFirst_F84=min(INDATUM[isF84==T]),
     dateFirst_F90=min(INDATUM[isF90==T]),
+    dateFirst_F84_F90=min(INDATUM[isF84_F90==T]),
     dateFirst_F91_to_F98=min(INDATUM[isF91_to_F98==T]),
     dateFirst_F40_to_F48=min(INDATUM[isF40_to_F48==T]),
     dateFirst_F10_to_F16_F18_F19=min(INDATUM[isF10_to_F16_F18_F19==T]),
@@ -697,6 +707,13 @@ CleanDataIncidentGD <- function(){
   xtabs(~d$c_analysisCat_hybrid+d$c_analysisYear_hybrid)
   xtabs(~d$c_analysisAgeCat_hybrid)
   
+  d[,c_analysisYearCat_hybrid:=fancycut::fancycut(c_analysisYear_hybrid,
+                                                  '2001-2006'='[2001,2006]',
+                                                  '2007-2011'='[2007,2011]',
+                                                  '2012-2016'='[2012,2016]'
+                                                  )]
+  xtabs(~d$c_analysisYear_hybrid+d$c_analysisYearCat_hybrid,addNA=T)
+  
   
   # #### exclusions
   d[,excluded_treatments:="No"]
@@ -776,6 +793,9 @@ CleanDataIncidentGD <- function(){
   
   d[,comorbid_F90:=dateFirst_F90<(c_analysisDate_hybrid+365*2)] #ADHD
   d[is.na(comorbid_F90),comorbid_F90:=FALSE]
+  
+  d[,comorbid_F84_F90:=dateFirst_F84_F90<(c_analysisDate_hybrid+365*2)] #ADHD
+  d[is.na(comorbid_F84_F90),comorbid_F84_F90:=FALSE]
   
   d[,comorbid_F91_to_F98:=dateFirst_F91_to_F98<c_analysisDate_hybrid]
   d[is.na(comorbid_F91_to_F98),comorbid_F91_to_F98:=FALSE]

@@ -131,12 +131,12 @@ for(cx in co){
 }
 
 # by age sex year
-res <- dz[, lapply(.SD, sum), keyby = .(bornSex, c_analysisYear_hybrid, c_analysisAgeCat_hybrid), .SDcols = c("N",co)]
+res <- dz[, lapply(.SD, sum), keyby = .(bornSex, c_analysisYearCat_hybrid, c_analysisAgeCat_hybrid), .SDcols = c("N",co)]
 openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,"comorbidity","by_age_sex_year.xlsx"))
 
-restricted_co <- c("comorbid_F84","comorbid_F90")
-for(cx in restricted_co){
-  to_plot <- res[,c("bornSex","c_analysisYear_hybrid","c_analysisAgeCat_hybrid","N",cx),with=F]
+#restricted_co <- c("comorbid_F84","comorbid_F90")
+for(cx in co){
+  to_plot <- res[,c("bornSex","c_analysisYearCat_hybrid","c_analysisAgeCat_hybrid","N",cx),with=F]
   to_plot[,n:=get(cx)]
   to_plot[,p:=-9]
   to_plot[,l_95:=-9]
@@ -147,7 +147,7 @@ for(cx in restricted_co){
     to_plot[i,l_95:=fit$conf.int[1]]
     to_plot[i,u_95:=fit$conf.int[2]]
   }
-  q <- ggplot(to_plot,aes(x=c_analysisYear_hybrid,y=p,ymin=l_95,ymax=u_95))
+  q <- ggplot(to_plot,aes(x=c_analysisYearCat_hybrid,y=p,ymin=l_95,ymax=u_95))
   q <- q + geom_pointrange()
   q <- q + geom_text(mapping=aes(label=glue::glue("{n}/{N}"),y=1.01),size=3,angle=90,hjust=0)
   q <- q + facet_grid(bornSex~c_analysisAgeCat_hybrid)
