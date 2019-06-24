@@ -38,6 +38,8 @@ fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"analyses_hybrid"))
 fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"analyses_together"))
 fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"hormones_surgeries_before_diagnosis"))
 fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"comorbidity"))
+fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"comorbidity_with_control_assigned"))
+fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"comorbidity_with_control_opposite"))
 
 ################
 # Load libraries
@@ -69,7 +71,7 @@ dz[,analysisYear_z:=c_analysisYear_diag]
 dz[,analysisAgeCat_z:=c_analysisAgeCat_diag]
 Analyses_1(dz,pop=GetPop(), folder="analyses_diag")
 
-dz <- d[!is.na(c_analysisCat_hybrid) & excluded_hybrid=="No"]
+dz <- d[c_analysisCat_hybrid=="Hybrid" & excluded_hybrid=="No"]
 dz[,analysisCat_z:=c_analysisCat_hybrid]
 dz[,analysisYear_z:=c_analysisYear_hybrid]
 dz[,analysisAgeCat_z:=c_analysisAgeCat_hybrid]
@@ -78,84 +80,26 @@ Analyses_1(dz,pop=GetPop(), folder="analyses_hybrid")
 dz <- d[!is.na(c_analysisCat_hybrid) & excluded_hybrid=="No"]
 analyses_together(dz,pop=GetPop(), folder="analyses_together")
 
+# losing people?
+dz <- d[c_analysisCat_hybrid=="Hybrid"]
+sink(fs::path(org::PROJ$SHARED_TODAY,"lost_hybrid.txt"))
+xtabs(~dz$excluded_hybrid)
+sink()
+
 # comorbidity
-dz <- d[!is.na(c_analysisCat_hybrid) & excluded_hybrid=="No"]
+dz <- d[c_analysisCat_hybrid=="Hybrid" & excluded_hybrid=="No"]
 dz[,N:=1]
-co <- stringr::str_subset(names(d),"^comorbid")
+comorbidity(dz=dz, folder="comorbidity")
 
-# by sex age
-res <- dz[, lapply(.SD, sum), keyby = .(bornSex, c_analysisAgeCat_hybrid), .SDcols = c("N",co)]
-openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,"comorbidity","by_sex_age.xlsx"))
+unique(d$c_analysisCat_hybrid)
+dz <- d[c_analysisCat_hybrid %in% c("Hybrid","control_assigned") & excluded_hybrid=="No"]
+dz[,N:=1]
+comorbidity(dz=dz, folder="comorbidity_with_control_assigned")
 
-long <- melt.data.table(res,id.vars=c("bornSex","c_analysisAgeCat_hybrid","N"))
-long[,cat:=glue::glue("{bornSex} {c_analysisAgeCat_hybrid}",
-                      bornSex=bornSex,
-                      c_analysisAgeCat_hybrid=c_analysisAgeCat_hybrid)]
-long[,cat:=factor(cat,levels=unique(long$cat))]
-long[,prop:=value/N]
-long[,lab:=glue::glue("{prop}%",prop=round(prop*100))]
-
-q <- ggplot(long, aes(x=cat,y=prop))
-q <- q + geom_col()
-q <- q + geom_text(mapping=aes(label=lab,y=prop+0.01),vjust=0,size=3)
-q <- q + facet_wrap(~variable)
-q <- q + scale_y_continuous("Percentage",labels=scales::percent,limits=c(0,max(long$prop)*1.1))
-q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
-q
-SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,"comorbidity","by_sex_age.png"))
-
-# by sex year
-res <- dz[, lapply(.SD, sum), keyby = .(bornSex, c_analysisYear_hybrid), .SDcols = c("N",co)]
-openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,"comorbidity","by_sex_year.xlsx"))
-
-for(cx in co){
-  to_plot <- res[,c("bornSex","c_analysisYear_hybrid","N",cx),with=F]
-  to_plot[,n:=get(cx)]
-  to_plot[,p:=-9]
-  to_plot[,l_95:=-9]
-  to_plot[,u_95:=-9]
-  for(i in 1:nrow(to_plot)){
-    fit <- stats::binom.test(to_plot[[cx]][i],to_plot$N[i])
-    to_plot[i,p:=fit$estimate]
-    to_plot[i,l_95:=fit$conf.int[1]]
-    to_plot[i,u_95:=fit$conf.int[2]]
-  }
-  q <- ggplot(to_plot,aes(x=c_analysisYear_hybrid,y=p,ymin=l_95,ymax=u_95))
-  q <- q + geom_pointrange()
-  q <- q + geom_text(mapping=aes(label=glue::glue("{n}/{N}"),y=1.01),size=3,angle=90,hjust=0)
-  q <- q + facet_wrap(~bornSex)
-  q <- q + scale_y_continuous("Percentage",labels=scales::percent,breaks=seq(0,1,0.2))
-  q <- q + expand_limits(y=c(0,1.05))
-  q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,"comorbidity",glue::glue("by_sex_year_{cx}.png")))
-}
-
-# by age sex year
-res <- dz[, lapply(.SD, sum), keyby = .(bornSex, c_analysisYearCat_hybrid, c_analysisAgeCat_hybrid), .SDcols = c("N",co)]
-openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,"comorbidity","by_age_sex_year.xlsx"))
-
-#restricted_co <- c("comorbid_F84","comorbid_F90")
-for(cx in co){
-  to_plot <- res[,c("bornSex","c_analysisYearCat_hybrid","c_analysisAgeCat_hybrid","N",cx),with=F]
-  to_plot[,n:=get(cx)]
-  to_plot[,p:=-9]
-  to_plot[,l_95:=-9]
-  to_plot[,u_95:=-9]
-  for(i in 1:nrow(to_plot)){
-    fit <- stats::binom.test(to_plot[[cx]][i],to_plot$N[i])
-    to_plot[i,p:=fit$estimate]
-    to_plot[i,l_95:=fit$conf.int[1]]
-    to_plot[i,u_95:=fit$conf.int[2]]
-  }
-  q <- ggplot(to_plot,aes(x=c_analysisYearCat_hybrid,y=p,ymin=l_95,ymax=u_95))
-  q <- q + geom_pointrange()
-  q <- q + geom_text(mapping=aes(label=glue::glue("{n}/{N}"),y=1.01),size=3,angle=90,hjust=0)
-  q <- q + facet_grid(bornSex~c_analysisAgeCat_hybrid)
-  q <- q + scale_y_continuous("Percentage",labels=scales::percent,breaks=seq(0,1,0.2))
-  q <- q + expand_limits(y=c(0,1.1))
-  q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,"comorbidity",glue::glue("by_age_sex_year_{cx}.png")))
-}
+unique(d$c_analysisCat_hybrid)
+dz <- d[c_analysisCat_hybrid %in% c("Hybrid","control_opposite") & excluded_hybrid=="No"]
+dz[,N:=1]
+comorbidity(dz=dz, folder="comorbidity_with_control_opposite")
 
 
 # end?

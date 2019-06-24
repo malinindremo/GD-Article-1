@@ -6,7 +6,8 @@ OverwriteWithEarlist <- function(d,rows,resVarDate,resVarCat,valVarDate,valCat){
 }
 
 CleanDataIncidentGD <- function(){
-  
+  links_assigned <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","fp_lev_fall_och_kontroller_1.sas7bdat")))
+  links_opposite <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","fp_lev_fall_och_kontroller_2.sas7bdat")))
   ov <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","ov.sas7bdat")))
   sv <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","sv.sas7bdat")))
   rx <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","ut_r_lmed_10218_2017.sas7bdat")))
@@ -701,6 +702,45 @@ CleanDataIncidentGD <- function(){
     c_analysisCat_hybrid:="Hybrid"]
   d[is.na(c_analysisCat_hybrid), c_analysisDate_hybrid:=NA]
   
+  # including matched controls
+  setnames(d,"LopNr","lopnr_fall")
+  links_assigned <- links_assigned[lopnr_fall %in% d[c_analysisCat_hybrid=="Hybrid"]$lopnr_fall]
+  links_opposite <- links_opposite[lopnr_fall %in% d[c_analysisCat_hybrid=="Hybrid"]$lopnr_fall]
+  
+  exclude_because_in_both <- links_opposite$lopnr_kontroll[links_opposite$lopnr_kontroll %in% links_assigned$lopnr_kontroll]
+  links_assigned <- links_assigned[!lopnr_kontroll %in% exclude_because_in_both]
+  links_opposite <- links_opposite[!lopnr_kontroll %in% exclude_because_in_both]
+  
+  exclude_because_cases <- d[!is.na(c_analysisCat_hybrid) & lopnr_fall %in% links_assigned$lopnr_kontroll]$lopnr_fall
+  links_assigned <- links_assigned[!lopnr_kontroll %in% exclude_because_cases]
+  exclude_because_cases <- d[!is.na(c_analysisCat_hybrid) & lopnr_fall %in% links_opposite$lopnr_kontroll]$lopnr_fall
+  links_opposite <- links_opposite[!lopnr_kontroll %in% exclude_because_cases]
+  
+  xtabs(~d[links_assigned, on = "lopnr_fall==lopnr_kontroll",]$c_analysisCat_hybrid)
+  xtabs(~d[links_opposite, on = "lopnr_fall==lopnr_kontroll",]$c_analysisCat_hybrid)
+  
+  d[links_assigned, on = "lopnr_fall==lopnr_kontroll",c_analysisCat_hybrid:="control_assigned"]
+  d[links_assigned, on = "lopnr_fall==lopnr_kontroll",lopnr_analysis_group:=i.lopnr_fall]
+  d[links_assigned, on = "lopnr_fall==lopnr_kontroll",analysis_kon:=fodelsekon]
+  
+  d[links_opposite, on = "lopnr_fall==lopnr_kontroll",c_analysisCat_hybrid:="control_opposite"]
+  d[links_opposite, on = "lopnr_fall==lopnr_kontroll",lopnr_analysis_group:=i.lopnr_fall]
+  d[links_opposite, on = "lopnr_fall==lopnr_kontroll",analysis_kon:=motsatt_fodelsekon]
+  
+  d[,analysis_born_male:=analysis_kon==1]
+  
+  d[c_analysisCat_hybrid=="Hybrid",lopnr_analysis_group:=lopnr_fall]
+  d[c_analysisCat_hybrid=="Hybrid",analysis_born_male:=isBornMale]
+  d[,analysis_born_sex:=ifelse(analysis_born_male,"Assigned male","Assigned female")]
+  d[,analysis_kon:=NULL]
+  
+  d[lopnr_analysis_group==798]
+  d[!is.na(lopnr_analysis_group),c_analysisDate_hybrid:=mean(c_analysisDate_hybrid,na.rm=T),by=.(lopnr_analysis_group)]
+  d[lopnr_analysis_group==798]
+  d[lopnr_analysis_group==21366]
+  
+  # end including matched controls
+  
   d[,c_analysisYear_hybrid:=YearN(c_analysisDate_hybrid)]
   d[,c_analysisAge_hybrid:=as.numeric(difftime(c_analysisDate_hybrid,dob,units="days"))/365.25]
   d[,c_analysisAgeCat_hybrid:=cut(c_analysisAge_hybrid,breaks = c(0,18,30,50,200),include.lowest = T)]
@@ -812,6 +852,7 @@ CleanDataIncidentGD <- function(){
   d[,comorbid_X60_to_X84:=dateFirst_X60_to_X84<c_analysisDate_hybrid]
   d[is.na(comorbid_X60_to_X84),comorbid_X60_to_X84:=FALSE]
   
+  setnames(d,"lopnr_fall","LopNr")
   return(d)
 }
 
