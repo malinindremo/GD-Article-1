@@ -77,7 +77,7 @@ dz[,analysisYear_z:=c_analysisYear_hybrid]
 dz[,analysisAgeCat_z:=c_analysisAgeCat_hybrid]
 Analyses_1(dz,pop=GetPop(), folder="analyses_hybrid")
 
-dz <- d[!is.na(c_analysisCat_hybrid) & excluded_hybrid=="No"]
+dz <- d[c_analysisCat_hybrid=="Hybrid" & excluded_hybrid=="No"]
 analyses_together(dz,pop=GetPop(), folder="analyses_together")
 
 # losing people?
