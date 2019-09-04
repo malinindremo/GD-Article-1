@@ -27,6 +27,9 @@ comorbidity <- function(dz,folder="comorbidity"){
   res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid, bornSex, c_analysisYear_hybrid), .SDcols = c("N",co)]
   openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,folder,"by_sex_year.xlsx"))
   
+  includes_controls <- FALSE
+  if(nrow(to_plot[c_analysisCat_hybrid!="Hybrid"])>0) includes_controls <- TRUE
+  
   for(cx in co){
     to_plot <- res[,c("c_analysisCat_hybrid","bornSex","c_analysisYear_hybrid","N",cx),with=F]
     to_plot[,n:=get(cx)]
@@ -39,14 +42,54 @@ comorbidity <- function(dz,folder="comorbidity"){
       to_plot[i,l_95:=fit$conf.int[1]]
       to_plot[i,u_95:=fit$conf.int[2]]
     }
+    # check slopes
+    to_plot[,id:=1:.N]
+    expanded <- to_plot[rep(seq(1, nrow(to_plot)), to_plot$N)]
+    expanded[,i:=1:.N,by=id]
+    expanded[,outcome:= i<= get(cx) ]
+    
+    if(includes_controls){
+      fit0 <- lm(
+        outcome~c_analysisYear_hybrid+c_analysisCat_hybrid, 
+        data=expanded[bornSex=="Assigned female"]
+      )
+      fit1 <- lm(
+        outcome~c_analysisYear_hybrid*c_analysisCat_hybrid, 
+        data=expanded[bornSex=="Assigned female"]
+      )
+      summary(fit0)
+      summary(fit1)
+      p_assigned_female <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+      p_assigned_female <- formatC(round(p_assigned_female,2),format="f", digits=2)
+      
+      fit0 <- lm(
+        outcome~c_analysisYear_hybrid+c_analysisCat_hybrid, 
+        data=expanded[bornSex=="Assigned male"]
+      )
+      fit1 <- lm(
+        outcome~c_analysisYear_hybrid*c_analysisCat_hybrid, 
+        data=expanded[bornSex=="Assigned male"]
+      )
+      summary(fit0)
+      summary(fit1)
+      p_assigned_male <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+      p_assigned_male <- formatC(round(p_assigned_male,2),format="f", digits=2)
+      
+      caption <- glue::glue(
+        "Within assigned female, testing time*is_control: pvalue={p_assigned_female}\n",
+        "Within assigned male, testing time*is_control: pvalue={p_assigned_male}\n",
+      )
+    }
+    
     q <- ggplot(to_plot,aes(x=c_analysisYear_hybrid,y=p,ymin=l_95,ymax=u_95,color=c_analysisCat_hybrid))
     q <- q + geom_pointrange(position=position_dodge(width = 0.5))
     q <- q + geom_text(data=to_plot[c_analysisCat_hybrid=="Hybrid"],mapping=aes(label=glue::glue("{n}/{N}"),y=1.01),size=3,angle=90,hjust=0)
-    if(nrow(to_plot[c_analysisCat_hybrid!="Hybrid"])>0) q <- q + geom_text(data=to_plot[c_analysisCat_hybrid!="Hybrid"],mapping=aes(label=glue::glue("{n}/{N}"),y=1.11),size=3,angle=90,hjust=0)
+    if(includes_controls) q <- q + geom_text(data=to_plot[c_analysisCat_hybrid!="Hybrid"],mapping=aes(label=glue::glue("{n}/{N}"),y=1.11),size=3,angle=90,hjust=0)
     q <- q + facet_wrap(~bornSex)
     q <- q + scale_y_continuous("Percentage",labels=scales::percent,breaks=seq(0,1,0.2))
     q <- q + expand_limits(y=c(0,1.05))
-    if(nrow(to_plot[c_analysisCat_hybrid!="Hybrid"])>0) q <- q + expand_limits(y=c(0,1.15))
+    if(includes_controls) q <- q + expand_limits(y=c(0,1.15))
+    if(includes_controls) q <- q + labs(caption=caption)
     q
     SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,glue::glue("by_sex_year_{cx}.png")))
   }

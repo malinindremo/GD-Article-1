@@ -107,17 +107,17 @@ CleanDataIncidentGD <- function(){
   
   # collapse down to 1 row/person
   rx <- rx[,.(
-    isHormone=as.logical(max(isHormone)),
-    dateFirstHormone=min(FDATUM[isHormone==TRUE]),
-    isHormone_2006_01_to_2016_12=as.logical(max(isHormone_2006_01_to_2016_12)),
+    isHormone=as.logical(max(isHormone, na.rm=T)),
+    dateFirstHormone=min(FDATUM[isHormone==TRUE], na.rm=T),
+    isHormone_2006_01_to_2016_12=as.logical(max(isHormone_2006_01_to_2016_12, na.rm=T)),
     
-    isHormoneMTF_2006_01_to_2016_12=as.logical(max(isHormoneMTF_2006_01_to_2016_12)),
-    isHormoneFTM_2006_01_to_2016_12=as.logical(max(isHormoneFTM_2006_01_to_2016_12)),
-    isHormonePubBlock_2006_01_to_2016_12=as.logical(max(isHormonePubBlock_2006_01_to_2016_12)),
+    isHormoneMTF_2006_01_to_2016_12=as.logical(max(isHormoneMTF_2006_01_to_2016_12, na.rm=T)),
+    isHormoneFTM_2006_01_to_2016_12=as.logical(max(isHormoneFTM_2006_01_to_2016_12, na.rm=T)),
+    isHormonePubBlock_2006_01_to_2016_12=as.logical(max(isHormonePubBlock_2006_01_to_2016_12, na.rm=T)),
     
-    c_isHormone=as.logical(max(c_isHormone)),
-    c_dateFirstHormone=min(FDATUM[c_isHormone==TRUE]),
-    c_isHormone_2006_01_to_2016_12=as.logical(max(c_isHormone_2006_01_to_2016_12))
+    c_isHormone=as.logical(max(c_isHormone, na.rm=T)),
+    c_dateFirstHormone=min(FDATUM[c_isHormone==TRUE], na.rm=T),
+    c_isHormone_2006_01_to_2016_12=as.logical(max(c_isHormone_2006_01_to_2016_12, na.rm=T))
   ),by=.(LopNr)]
   nrow(rx)
   for(i in names(rx)){
@@ -429,63 +429,65 @@ CleanDataIncidentGD <- function(){
   setorder(patients, LopNr, INDATUM)
   patients[isF64_089==TRUE,num_F64_089:=1:.N,by=LopNr]
   
+  xtabs(~patients$num_F64_089)
+
   patients <- patients[,.(
-    ageFirst_F64_089=min(age[isF64_089==TRUE]),
-    ageFirst_F64_0=min(age[isF64_0==T]),
-    ageFirst_F64_89=min(age[isF64_89==T]),
+    ageFirst_F64_089=min(age[isF64_089==TRUE],na.rm=T),
+    ageFirst_F64_0=min(age[isF64_0==T],na.rm=T),
+    ageFirst_F64_89=min(age[isF64_89==T],na.rm=T),
     
-    dateFirst_F64_089=min(INDATUM[isF64_089==TRUE]),
-    dateFirst_F64_0=min(INDATUM[isF64_0==T]),
-    dateFirst_F64_89=min(INDATUM[isF64_89==T]),
+    dateFirst_F64_089=min(INDATUM[isF64_089==TRUE],na.rm=T),
+    dateFirst_F64_0=min(INDATUM[isF64_0==T],na.rm=T),
+    dateFirst_F64_89=min(INDATUM[isF64_89==T],na.rm=T),
     
-    dateLast_F64_0=max(INDATUM[isF64_0==T]),
-    dateLast_F64_89=max(INDATUM[isF64_89==T]),
+    dateLast_F64_0=max(INDATUM[isF64_0==T],na.rm=T),
+    dateLast_F64_89=max(INDATUM[isF64_89==T],na.rm=T),
     
-    date_F64_089_2=min(INDATUM[num_F64_089==2]),
-    date_F64_089_3=min(INDATUM[num_F64_089==3]),
-    date_F64_089_4=min(INDATUM[num_F64_089==4]),
-    date_F64_089_5=min(INDATUM[num_F64_089==5]),
-    date_F64_089_6=min(INDATUM[num_F64_089==6]),
-    date_F64_089_7=min(INDATUM[num_F64_089==7]),
-    date_F64_089_8=min(INDATUM[num_F64_089==8]),
-    date_F64_089_9=min(INDATUM[num_F64_089==9]),
-    date_F64_089_10=min(INDATUM[num_F64_089==10]),
+    date_F64_089_2=min(INDATUM[num_F64_089==2],na.rm=T),
+    date_F64_089_3=min(INDATUM[num_F64_089==3],na.rm=T),
+    date_F64_089_4=min(INDATUM[num_F64_089==4],na.rm=T),
+    date_F64_089_5=min(INDATUM[num_F64_089==5],na.rm=T),
+    date_F64_089_6=min(INDATUM[num_F64_089==6],na.rm=T),
+    date_F64_089_7=min(INDATUM[num_F64_089==7],na.rm=T),
+    date_F64_089_8=min(INDATUM[num_F64_089==8],na.rm=T),
+    date_F64_089_9=min(INDATUM[num_F64_089==9],na.rm=T),
+    date_F64_089_10=min(INDATUM[num_F64_089==10],na.rm=T),
     
-    hadTranssexual_ICD_89=as.logical(max(isTranssexual_ICD_89)),
+    hadTranssexual_ICD_89=as.logical(max(isTranssexual_ICD_89,na.rm=T)),
     
-    numF64_089_2006_01_to_2014_12=sum(isF64_089_2006_01_to_2014_12),
+    numF64_089_2006_01_to_2014_12=sum(isF64_089_2006_01_to_2014_12,na.rm=T),
     
-    numF64_089=sum(isF64_089),
-    numF64_0=sum(isF64_0),
-    numF64_89=sum(isF64_89),
+    numF64_089=sum(isF64_089,na.rm=T),
+    numF64_0=sum(isF64_0,na.rm=T),
+    numF64_89=sum(isF64_89,na.rm=T),
     
-    isSurgicalMasectomy_2006_01_to_2016_12=as.logical(max(isSurgicalMasectomy_2006_01_to_2016_12)),
-    dateFirst_SurgicalMasectomy=min(INDATUM[isSurgicalMasectomy==TRUE]),
+    isSurgicalMasectomy_2006_01_to_2016_12=as.logical(max(isSurgicalMasectomy_2006_01_to_2016_12,na.rm=T)),
+    dateFirst_SurgicalMasectomy=min(INDATUM[isSurgicalMasectomy==TRUE],na.rm=T),
     
-    isSurgicalReconstVag_2006_01_to_2016_12=as.logical(max(isSurgicalReconstVag_2006_01_to_2016_12)),
-    dateFirst_SurgicalReconstVag=min(INDATUM[isSurgicalReconstVag==TRUE]),
+    isSurgicalReconstVag_2006_01_to_2016_12=as.logical(max(isSurgicalReconstVag_2006_01_to_2016_12,na.rm=T)),
+    dateFirst_SurgicalReconstVag=min(INDATUM[isSurgicalReconstVag==TRUE],na.rm=T),
     
-    isSurgicalPenisAmp_2006_01_to_2016_12=as.logical(max(isSurgicalPenisAmp_2006_01_to_2016_12)),
-    dateFirst_SurgicalPenisAmp=min(INDATUM[isSurgicalPenisAmp==TRUE]),
+    isSurgicalPenisAmp_2006_01_to_2016_12=as.logical(max(isSurgicalPenisAmp_2006_01_to_2016_12,na.rm=T)),
+    dateFirst_SurgicalPenisAmp=min(INDATUM[isSurgicalPenisAmp==TRUE],na.rm=T),
     
-    isSurgicalPenisTestProsth_2006_01_to_2016_12=as.logical(max(isSurgicalPenisTestProsth_2006_01_to_2016_12)),
-    dateFirst_SurgicalPenisTestProsth=min(INDATUM[isSurgicalPenisTestProsth==TRUE]),
+    isSurgicalPenisTestProsth_2006_01_to_2016_12=as.logical(max(isSurgicalPenisTestProsth_2006_01_to_2016_12,na.rm=T)),
+    dateFirst_SurgicalPenisTestProsth=min(INDATUM[isSurgicalPenisTestProsth==TRUE],na.rm=T),
     
-    dateFirst_F00_to_F99=min(INDATUM[isF00_to_F99==T]),
-    dateFirst_F70_to_F79=min(INDATUM[isF70_to_F79==T]),
-    dateFirst_F80_R47=min(INDATUM[isF80_R47==T]),
-    dateFirst_F20_to_F29=min(INDATUM[isF20_to_F29==T]),
-    dateFirst_F30_to_F31=min(INDATUM[isF30_to_F31==T]),
-    dateFirst_F32_to_F33=min(INDATUM[isF32_to_F33==T]),
-    dateFirst_F50=min(INDATUM[isF50==T]),
-    dateFirst_F84=min(INDATUM[isF84==T]),
-    dateFirst_F90=min(INDATUM[isF90==T]),
-    dateFirst_F84_F90=min(INDATUM[isF84_F90==T]),
-    dateFirst_F91_to_F98=min(INDATUM[isF91_to_F98==T]),
-    dateFirst_F40_to_F48=min(INDATUM[isF40_to_F48==T]),
-    dateFirst_F10_to_F16_F18_F19=min(INDATUM[isF10_to_F16_F18_F19==T]),
-    dateFirst_F60=min(INDATUM[isF60==T]),
-    dateFirst_X60_to_X84=min(INDATUM[isX60_to_X84==T])
+    dateFirst_F00_to_F99=min(INDATUM[isF00_to_F99==T],na.rm=T),
+    dateFirst_F70_to_F79=min(INDATUM[isF70_to_F79==T],na.rm=T),
+    dateFirst_F80_R47=min(INDATUM[isF80_R47==T],na.rm=T),
+    dateFirst_F20_to_F29=min(INDATUM[isF20_to_F29==T],na.rm=T),
+    dateFirst_F30_to_F31=min(INDATUM[isF30_to_F31==T],na.rm=T),
+    dateFirst_F32_to_F33=min(INDATUM[isF32_to_F33==T],na.rm=T),
+    dateFirst_F50=min(INDATUM[isF50==T],na.rm=T),
+    dateFirst_F84=min(INDATUM[isF84==T],na.rm=T),
+    dateFirst_F90=min(INDATUM[isF90==T],na.rm=T),
+    dateFirst_F84_F90=min(INDATUM[isF84_F90==T],na.rm=T),
+    dateFirst_F91_to_F98=min(INDATUM[isF91_to_F98==T],na.rm=T),
+    dateFirst_F40_to_F48=min(INDATUM[isF40_to_F48==T],na.rm=T),
+    dateFirst_F10_to_F16_F18_F19=min(INDATUM[isF10_to_F16_F18_F19==T],na.rm=T),
+    dateFirst_F60=min(INDATUM[isF60==T],na.rm=T),
+    dateFirst_X60_to_X84=min(INDATUM[isX60_to_X84==T],na.rm=T)
   ), by=.(
     LopNr
   )]
@@ -493,6 +495,7 @@ CleanDataIncidentGD <- function(){
     patients[is.infinite(get(i)),(i):=NA]
   }
   
+  sum(!is.na(patients$date_F64_089_4))
   # days to X diagnosis
   patients[,years_to_F64_089_2:=as.numeric(difftime(date_F64_089_2,dateFirst_F64_089,units="days"))/365.25]
   patients[,years_to_F64_089_3:=as.numeric(difftime(date_F64_089_3,dateFirst_F64_089,units="days"))/365.25]
@@ -573,51 +576,46 @@ CleanDataIncidentGD <- function(){
   # hormones
   d[numF64_089>=1 & 
       dateFirst_F64_089>="2006-01-01" &
-      dateFirst_F64_089<="2016-12-31" & 
-      c_dateFirstHormone>="2006-01-01" & 
-      c_dateFirstHormone<="2016-12-31",
+      dateFirst_F64_089<="2015-12-31" & 
+      c_dateFirstHormone>="2006-01-01",
     
-    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
+    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2015-12-31]"
   ]
   
   # masectomy
   d[numF64_089>=1 & 
       dateFirst_F64_089>="2006-01-01" &
-      dateFirst_F64_089<="2016-12-31" & 
-      c_dateFirst_SurgicalMasectomy>="2006-01-01" & 
-      c_dateFirst_SurgicalMasectomy<="2016-12-31",
+      dateFirst_F64_089<="2015-12-31" & 
+      c_dateFirst_SurgicalMasectomy>="2006-01-01",
     
-    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
+    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2015-12-31]"
     ]
   
   # penisamp
   d[numF64_089>=1 & 
       dateFirst_F64_089>="2006-01-01" &
-      dateFirst_F64_089<="2016-12-31" & 
-      c_dateFirst_SurgicalPenisAmp>="2006-01-01" & 
-      c_dateFirst_SurgicalPenisAmp<="2016-12-31",
+      dateFirst_F64_089<="2015-12-31" & 
+      c_dateFirst_SurgicalPenisAmp>="2006-01-01",
     
-    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
+    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2015-12-31]"
     ]
   
   # reconstvag
   d[numF64_089>=1 & 
       dateFirst_F64_089>="2006-01-01" &
-      dateFirst_F64_089<="2016-12-31" & 
-      c_dateFirst_SurgicalReconstVag>="2006-01-01" & 
-      c_dateFirst_SurgicalReconstVag<="2016-12-31",
+      dateFirst_F64_089<="2015-12-31" & 
+      c_dateFirst_SurgicalReconstVag>="2006-01-01",
     
-    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
+    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2015-12-31]"
     ]
   
   # penistestprosth
   d[numF64_089>=1 & 
       dateFirst_F64_089>="2006-01-01" &
-      dateFirst_F64_089<="2016-12-31" & 
-      c_dateFirst_SurgicalPenisTestProsth>="2006-01-01" & 
-      c_dateFirst_SurgicalPenisTestProsth<="2016-12-31",
+      dateFirst_F64_089<="2015-12-31" & 
+      c_dateFirst_SurgicalPenisTestProsth>="2006-01-01",
     
-    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2016-12-31]"
+    c_analysisCat_treatments:="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2015-12-31]"
     ]
   
   d[is.na(c_analysisCat_treatments), c_analysisDate_treatments:=NA]
@@ -631,42 +629,36 @@ CleanDataIncidentGD <- function(){
   # date of first surgery or hormones
   d[
     !is.na(c_analysisCat_treatments) & 
-      c_dateFirstHormone>="2006-01-01" & 
-      c_dateFirstHormone<="2016-12-31", 
+      c_dateFirstHormone>="2006-01-01", 
     c_analysisCat_treatments_first_date_of_surgery_hormones:=as.Date("2100-01-01")]
   
   d[
     !is.na(c_analysisCat_treatments) & 
-      c_dateFirstHormone>="2006-01-01" & 
-      c_dateFirstHormone<="2016-12-31" &
+      c_dateFirstHormone>="2006-01-01" &
       c_dateFirstHormone <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
     c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirstHormone]
   
   d[
     !is.na(c_analysisCat_treatments) & 
-      c_dateFirst_SurgicalMasectomy>="2006-01-01" & 
-      c_dateFirst_SurgicalMasectomy<="2016-12-31" &
+      c_dateFirst_SurgicalMasectomy>="2006-01-01" &
       c_dateFirst_SurgicalMasectomy <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
     c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalMasectomy]
   
   d[
     !is.na(c_analysisCat_treatments) & 
       c_dateFirst_SurgicalPenisAmp>="2006-01-01" & 
-      c_dateFirst_SurgicalPenisAmp<="2016-12-31" &
       c_dateFirst_SurgicalPenisAmp <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
     c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalPenisAmp]
   
   d[
     !is.na(c_analysisCat_treatments) & 
-      c_dateFirst_SurgicalReconstVag>="2006-01-01" & 
-      c_dateFirst_SurgicalReconstVag<="2016-12-31" &
+      c_dateFirst_SurgicalReconstVag>="2006-01-01" &
       c_dateFirst_SurgicalReconstVag <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
     c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalReconstVag]
   
   d[
     !is.na(c_analysisCat_treatments) & 
-      c_dateFirst_SurgicalPenisTestProsth>="2006-01-01" & 
-      c_dateFirst_SurgicalPenisTestProsth<="2016-12-31" &
+      c_dateFirst_SurgicalPenisTestProsth>="2006-01-01" &
       c_dateFirst_SurgicalPenisTestProsth <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
     c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalPenisTestProsth]
   
@@ -682,8 +674,8 @@ CleanDataIncidentGD <- function(){
   d[
     numF64_089>=4 & 
     dateFirst_F64_089>="2001-01-01" &
-    dateFirst_F64_089<="2016-12-31",
-    c_analysisCat_diag:="numF64_089>=4, first diag: [2001-01-01, 2016-12-31]"
+    dateFirst_F64_089<="2015-12-31",
+    c_analysisCat_diag:="numF64_089>=4, first diag: [2001-01-01, 2015-12-31]"
    ]
   
   d[is.na(c_analysisCat_diag), c_analysisDate_diag:=NA]
@@ -693,6 +685,26 @@ CleanDataIncidentGD <- function(){
   d[,c_analysisAgeCat_diag:=cut(c_analysisAge_diag,breaks = c(0,18,30,50,200),include.lowest = T)]
   xtabs(~d$c_analysisCat_diag+d$c_analysisYear_diag)
   xtabs(~d$c_analysisAgeCat_diag)
+  
+  ####
+  # analysis cats
+  # F64_089
+  d[,c_analysisCat_single:=as.character(NA)]
+  d[,c_analysisDate_single:=dateFirst_F64_089]
+  d[
+    numF64_089>=1 & 
+      dateFirst_F64_089>="2001-01-01" &
+      dateFirst_F64_089<="2015-12-31",
+    c_analysisCat_single:="numF64_089>=1, first diag: [2001-01-01, 2015-12-31]"
+    ]
+  
+  d[is.na(c_analysisCat_single), c_analysisDate_single:=NA]
+  
+  d[,c_analysisYear_single:=YearN(c_analysisDate_single)]
+  d[,c_analysisAge_single:=as.numeric(difftime(c_analysisDate_single,dob,units="days"))/365.25]
+  d[,c_analysisAgeCat_single:=cut(c_analysisAge_single,breaks = c(0,18,30,50,200),include.lowest = T)]
+  xtabs(~d$c_analysisCat_single+d$c_analysisYear_single)
+  xtabs(~d$c_analysisAgeCat_single)
   
   
   ## HYBRID
@@ -750,7 +762,7 @@ CleanDataIncidentGD <- function(){
   d[,c_analysisYearCat_hybrid:=fancycut::fancycut(c_analysisYear_hybrid,
                                                   '2001-2006'='[2001,2006]',
                                                   '2007-2011'='[2007,2011]',
-                                                  '2012-2016'='[2012,2016]'
+                                                  '2012-2015'='[2012,2015]'
                                                   )]
   xtabs(~d$c_analysisYear_hybrid+d$c_analysisYearCat_hybrid,addNA=T)
   
@@ -782,7 +794,9 @@ CleanDataIncidentGD <- function(){
   xtabs(~d$excluded_diag)
   
   xtabs(~d$excluded_treatments+d$excluded_diag)
+  
   d[,excluded_hybrid:=excluded_treatments]
+  d[,excluded_single:=excluded_diag]
   
   
   # dateFirst_F64_089
@@ -799,7 +813,7 @@ CleanDataIncidentGD <- function(){
   d[numF64_089_2006_01_to_2014_12==9,c_analysisCat_F64_089_ge10:="09 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
   d[numF64_089_2006_01_to_2014_12>=10,c_analysisCat_F64_089_ge10:="10+ F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
   
-  d[,c_analysisCat_F64_089_ge4:="0 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31]"]
+  d[,c_analysisCat_F64_089_ge4:="0 F64.0/8/9 diagnosis [2006-01-01, 2015-12-31]"]
   d[numF64_089_2006_01_to_2014_12==1,c_analysisCat_F64_089_ge4:="1 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
   d[numF64_089_2006_01_to_2014_12==2,c_analysisCat_F64_089_ge4:="2 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
   d[numF64_089_2006_01_to_2014_12==3,c_analysisCat_F64_089_ge4:="3 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]

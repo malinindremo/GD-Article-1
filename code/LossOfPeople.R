@@ -16,7 +16,7 @@ LossOfPeopleTreatments <- function(d, type="treatments"){
     res <- d[excluded=="No" &
                numF64_089>=1 & 
                dateFirst_F64_089>="2006-01-01" &
-               dateFirst_F64_089<="2016-12-31",
+               dateFirst_F64_089<="2015-12-31",
       .(
         wrong_isHormone_2006_01_to_2016_12=sum(isHormone_2006_01_to_2016_12 & !c_isHormone_2006_01_to_2016_12),
         wrong_isSurgicalMasectomy_2006_01_to_2016_12=sum(isSurgicalMasectomy_2006_01_to_2016_12 & !c_isSurgicalMasectomy_2006_01_to_2016_12),
