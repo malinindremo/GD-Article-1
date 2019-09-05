@@ -27,8 +27,6 @@ comorbidity <- function(dz,folder="comorbidity"){
   res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid, bornSex, c_analysisYear_hybrid), .SDcols = c("N",co)]
   openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,folder,"by_sex_year.xlsx"))
   
-  includes_controls <- FALSE
-  if(nrow(to_plot[c_analysisCat_hybrid!="Hybrid"])>0) includes_controls <- TRUE
   
   for(cx in co){
     to_plot <- res[,c("c_analysisCat_hybrid","bornSex","c_analysisYear_hybrid","N",cx),with=F]
@@ -47,6 +45,9 @@ comorbidity <- function(dz,folder="comorbidity"){
     expanded <- to_plot[rep(seq(1, nrow(to_plot)), to_plot$N)]
     expanded[,i:=1:.N,by=id]
     expanded[,outcome:= i<= get(cx) ]
+    
+    includes_controls <- FALSE
+    if(nrow(to_plot[c_analysisCat_hybrid!="Hybrid"])>0) includes_controls <- TRUE
     
     if(includes_controls){
       fit0 <- lm(
