@@ -21,8 +21,7 @@ org::InitialiseProject(
   SHARED = c(
     fs::path("/filr", "Shared with Me", "Gender dysphoria -shared folder", "results"),
     fs::path("/Users","malin976","Filr","Mina filer","Gender dysphoria -shared folder", "results"),
-    fs::path("/Users","Georgios","Filr","Shared with Me","Malin-results"),
-    fs::path("/filr", "My Files", "GD-Article-1")
+    fs::path("/Users","Georgios","Filr","Shared with Me","Malin-results")
   ),
   DATA_RAW = c(
     fs::path("/Volumes","data","local","org","data_raw","code_minor","2018","GD-Article-1"),
