@@ -26,7 +26,8 @@ Analyses_1 <- function(dz, d_single, pop, folder){
   agg[is.na(N), N:=0]
   tosave <- rbind(
     dcast.data.table(agg,bornSex+analysisCat_z~analysisYear_z),
-    dcast.data.table(agg_single,bornSex+analysisCat_z~analysisYear_z)
+    dcast.data.table(agg_single,bornSex+analysisCat_z~analysisYear_z),
+    fill=T
   )
   xlsx::write.xlsx(
     tosave,

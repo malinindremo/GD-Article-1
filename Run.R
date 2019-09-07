@@ -19,7 +19,7 @@ org::InitialiseProject(
     fs::path("/Users","Georgios","Documents","Research-Malin","GD-Article-1")
   ),
   SHARED = c(
-    fs::path("/filr", "Shared with Me", "Gender dysphoria -shared folder", "results"),
+    fs::path("/Volumes", "data", "box", "Gender dysphoria", "results"),
     fs::path("/Users","malin976","Filr","Mina filer","Gender dysphoria -shared folder", "results"),
     fs::path("/Users","Georgios","Filr","Shared with Me","Malin-results")
   ),
