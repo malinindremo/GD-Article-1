@@ -20,7 +20,7 @@ org::InitialiseProject(
   ),
   SHARED = c(
     fs::path("/Volumes", "data", "box", "Gender dysphoria", "results"),
-    fs::path("/Users","malin976","Filr","Mina filer","Gender dysphoria -shared folder", "results"),
+    fs::path("/Users","malin976", "Box Sync", "Gender dysphoria", "results"),
     fs::path("/Users","Georgios","Filr","Shared with Me","Malin-results")
   ),
   DATA_RAW = c(
