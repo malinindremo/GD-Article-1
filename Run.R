@@ -49,6 +49,7 @@ library(data.table)
 library(ggplot2)
 
 d <- CleanDataIncidentGD()
+
 d[LopNr == 20842]
 LossOfPeopleTreatments(d,type = "treatments")
 LossOfPeopleTreatments(d,type = "diag")

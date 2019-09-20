@@ -6,6 +6,8 @@ OverwriteWithEarlist <- function(d,rows,resVarDate,resVarCat,valVarDate,valCat){
 }
 
 CleanDataIncidentGD <- function(){
+  number_lines <- 900
+  cat("****** Line 9 /",number_lines,"\n")
   links_assigned <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","fp_lev_fall_och_kontroller_1.sas7bdat")))
   links_opposite <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","fp_lev_fall_och_kontroller_2.sas7bdat")))
   ov <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","ov.sas7bdat")))
@@ -16,7 +18,7 @@ CleanDataIncidentGD <- function(){
   sex[,isBornMale:=kon==1]
   sex[,bornSex:=ifelse(isBornMale,"Assigned male","Assigned female")]
   sex[,kon:=NULL]
-  
+  cat("****** Line 21 /",number_lines,"\n")
  
   ## sex change 
   sexChange <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","konsbyten.sas7bdat")))
@@ -30,6 +32,8 @@ CleanDataIncidentGD <- function(){
   sexChange[,konsbyte_datum:=NULL]
   
   ## DOB
+  cat("****** Line 35 /",number_lines,"\n")
+  print("Line 33")
   demografi[,dob:=as.Date(sprintf(
     "%s-%s-%s",
     stringr::str_sub(fodelseman,1,4),
@@ -46,6 +50,7 @@ CleanDataIncidentGD <- function(){
   setnames(demografi,"lopnr","LopNr")
   
   ## hormone prescription
+  cat("****** Line 53 /",number_lines,"\n")
   rx[,isHormoneMTF:=FALSE]
   for(i in c("^L02", "^G04CB01", "^C03DA01", "^G03H", "^G03C")){
     rx[stringr::str_detect(atc,i),isHormoneMTF:=TRUE]
@@ -62,16 +67,19 @@ CleanDataIncidentGD <- function(){
   }
   
   # merge in sex
+  cat("****** Line 70 /",number_lines,"\n")
   nrow(sex)
   rx <- merge(sex,rx,by.x="LopNr",by.y="lopnr",all.x=T)
   nrow(rx)
   # merge in demography
+  cat("****** Line 75 /",number_lines,"\n")
   rx <- merge(rx,demografi[,c("LopNr","dob")],by="LopNr")
   nrow(rx)
   rx[,age:=as.numeric(difftime(FDATUM,dob,units="days"))/365.25]
   rx[,dob:=NULL]
  
   # remove hormones that are going the wrong way with regards to gender
+  cat("****** Line 82 /",number_lines,"\n")
   rx[,c_isHormoneFTM:=isHormoneFTM]
   rx[,c_isHormoneMTF:=isHormoneMTF]
   rx[,c_isHormonePubBlock:=isHormonePubBlock]
@@ -105,6 +113,7 @@ CleanDataIncidentGD <- function(){
   rx[FDATUM < "2006-01-01",c_isHormone_2006_01_to_2016_12:=FALSE]
   rx[FDATUM > "2016-12-31",c_isHormone_2006_01_to_2016_12:=FALSE]
   
+  cat("****** Line 116 /",number_lines,"\n")
   # collapse down to 1 row/person
   rx <- rx[,.(
     isHormone=as.logical(max(isHormone, na.rm=T)),
@@ -124,6 +133,7 @@ CleanDataIncidentGD <- function(){
     rx[is.infinite(get(i)),(i):=NA]
   }
   
+  cat("****** Line 136 /",number_lines,"\n")
   # diagnoses and surgeries
   ov[,type:="outpatient"]
   sv[,type:="inpatient"]
@@ -136,6 +146,7 @@ CleanDataIncidentGD <- function(){
   
   setorder(patients,LopNr,INDATUM)
   
+  cat("****** Line 149 /",number_lines,"\n")
   # merge with sex
   nrow(patients)
   patients <- merge(patients,sex,by="LopNr", all.x=T)
@@ -163,8 +174,13 @@ CleanDataIncidentGD <- function(){
   patients[, isF10_to_F16_F18_F19:=FALSE]
   patients[, isF60:=FALSE]
   patients[, isX60_to_X84:=FALSE]
+  cat("****** (the next part is going to take a long time) Line 177 /",number_lines,"\n")
   # 1973–1988 (ICD-8), 1987– 1998 (ICD-9) and 1996 onwards (ICD-10).
-  for(i in c("HDIA",stringr::str_subset(names(patients), "^DIA"),stringr::str_subset(names(patients), "^EKOD"))){
+  loop_through <- c("HDIA",stringr::str_subset(names(patients), "^DIA"),stringr::str_subset(names(patients), "^EKOD"))
+  for(ii in seq_along(loop_through)){
+    cat("looping:", ii,"/",length(loop_through), "\n")
+    i <- loop_through[ii]
+    
     patients[stringr::str_detect(get(i),"^F640"), isF64_0:=TRUE]
     patients[stringr::str_detect(get(i),"^F648"), isF64_89:=TRUE]
     patients[stringr::str_detect(get(i),"^F649"), isF64_89:=TRUE]
@@ -355,6 +371,7 @@ CleanDataIncidentGD <- function(){
     patients[stringr::str_detect(get(i),"^E95[0-9],"), isX60_to_X84:=TRUE]
   }
   patients[,isF64_089:=isF64_0 | isF64_89]
+  cat("****** Line 370 /",number_lines,"\n")
   
   patients[,isF64_089_2006_01_to_2014_12:=isF64_089]
   patients[INDATUM < "2006-01-01",isF64_089_2006_01_to_2014_12:=FALSE]
@@ -402,6 +419,7 @@ CleanDataIncidentGD <- function(){
   surgeries[["Larynx"]] <- c(
     "DQD40")
   
+  cat("****** (next part is going to take a long time) Line 418 /",number_lines,"\n")
   for(i in seq_along(surgeries)){
     newVar <- sprintf("isSurgical%s",names(surgeries)[i])
     newVar_2006_01_to_2016_12 <- sprintf("%s_2006_01_to_2016_12",newVar)
@@ -417,6 +435,7 @@ CleanDataIncidentGD <- function(){
     
   }
 
+  cat("****** Line 435 /",number_lines,"\n")
   # merge diagnoses/surgeries with DOB
   nrow(patients)
   patients <- merge(patients,demografi[,c("LopNr","dob")],by="LopNr")
@@ -431,6 +450,7 @@ CleanDataIncidentGD <- function(){
   
   xtabs(~patients$num_F64_089)
 
+  cat("****** Line 449 /",number_lines,"\n")
   patients <- patients[,.(
     ageFirst_F64_089=min(age[isF64_089==TRUE],na.rm=T),
     ageFirst_F64_0=min(age[isF64_0==T],na.rm=T),
@@ -494,7 +514,7 @@ CleanDataIncidentGD <- function(){
   for(i in names(patients)){
     patients[is.infinite(get(i)),(i):=NA]
   }
-  
+  cat("****** Line 513 /",number_lines,"\n")
   sum(!is.na(patients$date_F64_089_4))
   # days to X diagnosis
   patients[,years_to_F64_089_2:=as.numeric(difftime(date_F64_089_2,dateFirst_F64_089,units="days"))/365.25]
@@ -540,6 +560,7 @@ CleanDataIncidentGD <- function(){
     d[is.na(get(i)),(i):=FALSE]
   }
   
+  cat("****** Line 559 /",number_lines,"\n")
   d[,hadSexChange_le2000_12_31:=FALSE]
   d[dateSexChange<"2001-01-01",hadSexChange_le2000_12_31:=TRUE]
   d[,hadSexChange_le2006_01_01:=FALSE]
@@ -665,7 +686,7 @@ CleanDataIncidentGD <- function(){
   
   d[!is.na(c_analysisCat_treatments_first_date_of_surgery_hormones),c_analysisCat_treatments_years_to_first_date_of_surgery_hormones:=as.numeric(difftime(c_analysisCat_treatments_first_date_of_surgery_hormones,dateFirst_F64_089,units="days"))/365.25]
   
-  
+  cat("****** Line 685 /",number_lines,"\n")
   ####
   # analysis cats
   # F64_089
@@ -867,6 +888,9 @@ CleanDataIncidentGD <- function(){
   d[is.na(comorbid_X60_to_X84),comorbid_X60_to_X84:=FALSE]
   
   setnames(d,"lopnr_fall","LopNr")
+  
+  for(i in 1:5) cat("**** DONE \n")
+  
   return(d)
 }
 
