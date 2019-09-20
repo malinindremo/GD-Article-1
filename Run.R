@@ -19,12 +19,12 @@ org::InitialiseProject(
     fs::path("/Users","Georgios","Documents","Research-Malin","GD-Article-1")
   ),
   SHARED = c(
-    fs::path("/Volumes", "data", "box", "Gender dysphoria", "results"),
+    fs::path("/volumes", "data", "box", "Gender dysphoria", "results"),
     fs::path("/Users","malin976", "Box Sync", "Gender dysphoria", "results"),
     fs::path("/Users","Georgios", "Box Sync", "Gender dysphoria", "results")
   ),
   DATA_RAW = c(
-    fs::path("/Volumes","data","local","org","data_raw","code_minor","2018","GD-Article-1"),
+    fs::path("/volumes","data","local","org","data_raw","code_minor","2018","GD-Article-1"),
     fs::path("/Users","malin976","Documents","Article-1-data"),
     fs::path("/Volumes","KonsdysforiregisterKaramanis")
   )
