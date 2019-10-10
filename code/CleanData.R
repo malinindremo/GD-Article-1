@@ -710,22 +710,22 @@ CleanDataIncidentGD <- function(){
   ####
   # analysis cats
   # F64_089
-  d[,c_analysisCat_single:=as.character(NA)]
-  d[,c_analysisDate_single:=dateFirst_F64_089]
+  d[,c_analysisCat_oneplusdiag:=as.character(NA)]
+  d[,c_analysisDate_oneplusdiag:=dateFirst_F64_089]
   d[
     numF64_089>=1 & 
       dateFirst_F64_089>="2001-01-01" &
       dateFirst_F64_089<="2015-12-31",
-    c_analysisCat_single:="numF64_089>=1, first diag: [2001-01-01, 2015-12-31]"
+    c_analysisCat_oneplusdiag:="numF64_089>=1, first diag: [2001-01-01, 2015-12-31]"
     ]
   
-  d[is.na(c_analysisCat_single), c_analysisDate_single:=NA]
+  d[is.na(c_analysisCat_oneplusdiag), c_analysisDate_oneplusdiag:=NA]
   
-  d[,c_analysisYear_single:=YearN(c_analysisDate_single)]
-  d[,c_analysisAge_single:=as.numeric(difftime(c_analysisDate_single,dob,units="days"))/365.25]
-  d[,c_analysisAgeCat_single:=cut(c_analysisAge_single,breaks = c(0,18,30,50,200),include.lowest = T)]
-  xtabs(~d$c_analysisCat_single+d$c_analysisYear_single)
-  xtabs(~d$c_analysisAgeCat_single)
+  d[,c_analysisYear_oneplusdiag:=YearN(c_analysisDate_oneplusdiag)]
+  d[,c_analysisAge_oneplusdiag:=as.numeric(difftime(c_analysisDate_oneplusdiag,dob,units="days"))/365.25]
+  d[,c_analysisAgeCat_oneplusdiag:=cut(c_analysisAge_oneplusdiag,breaks = c(0,18,30,50,200),include.lowest = T)]
+  xtabs(~d$c_analysisCat_oneplusdiag+d$c_analysisYear_oneplusdiag)
+  xtabs(~d$c_analysisAgeCat_oneplusdiag)
   
   
   ## HYBRID
@@ -817,7 +817,7 @@ CleanDataIncidentGD <- function(){
   xtabs(~d$excluded_treatments+d$excluded_diag)
   
   d[,excluded_hybrid:=excluded_treatments]
-  d[,excluded_single:=excluded_diag]
+  d[,excluded_oneplusdiag:=excluded_diag]
   
   
   # dateFirst_F64_089

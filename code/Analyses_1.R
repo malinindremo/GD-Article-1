@@ -1,16 +1,16 @@
-Analyses_1 <- function(dz, d_single, pop, folder){
-  agg_single <- d_single[,
+Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
+  agg_oneplusdiag <- d_oneplusdiag[,
                          .(
                            N=.N
                          ),keyby=.(
                            bornSex,
                            analysisCat_z,
                            analysisYear_z
-                         )][CJ(unique(d_single$bornSex),
-                               unique(d_single$analysisCat_z),
-                               unique(d_single$analysisYear_z))
+                         )][CJ(unique(d_oneplusdiag$bornSex),
+                               unique(d_oneplusdiag$analysisCat_z),
+                               unique(d_oneplusdiag$analysisYear_z))
                             ,allow.cartesian= TRUE]
-  agg_single[is.na(N), N:=0]
+  agg_oneplusdiag[is.na(N), N:=0]
 
   agg <- dz[,
             .(
@@ -26,7 +26,7 @@ Analyses_1 <- function(dz, d_single, pop, folder){
   agg[is.na(N), N:=0]
   tosave <- rbind(
     dcast.data.table(agg,bornSex+analysisCat_z~analysisYear_z),
-    dcast.data.table(agg_single,bornSex+analysisCat_z~analysisYear_z),
+    dcast.data.table(agg_oneplusdiag,bornSex+analysisCat_z~analysisYear_z),
     fill=T
   )
   xlsx::write.xlsx(
@@ -37,21 +37,21 @@ Analyses_1 <- function(dz, d_single, pop, folder){
   # plot 1
   # number of diagnoses
   # all ages, by born sex
-  agg_single <- d_single[,
+  agg_oneplusdiag <- d_oneplusdiag[,
             .(
               N=.N
             ),keyby=.(
               bornSex,
               analysisYear_z
-            )][CJ(unique(d_single$bornSex),
-                  unique(d_single$analysisYear_z))
+            )][CJ(unique(d_oneplusdiag$bornSex),
+                  unique(d_oneplusdiag$analysisYear_z))
                ,allow.cartesian= TRUE]
-  agg_single[is.na(N), N:=0]
+  agg_oneplusdiag[is.na(N), N:=0]
   
-  agg_single <- merge(agg_single,pop[ageCat=="All"],
+  agg_oneplusdiag <- merge(agg_oneplusdiag,pop[ageCat=="All"],
                by.x=c("analysisYear_z","bornSex"),
                by.y=c("year","bornSex"))
-  agg_single[,definition:="Single diagnosis"]
+  agg_oneplusdiag[,definition:="1+ diagnoses"]
   
   agg <- dz[,
             .(
@@ -69,7 +69,7 @@ Analyses_1 <- function(dz, d_single, pop, folder){
                by.y=c("year","bornSex"))
   agg[,definition:=folder]
   
-  agg_together <- rbind(agg_single, agg)
+  agg_together <- rbind(agg_oneplusdiag, agg)
   openxlsx::write.xlsx(agg_together, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex.xlsx"))
   
   q <- ggplot(agg,aes(x=analysisYear_z,y=N,colour=bornSex))
@@ -107,34 +107,34 @@ Analyses_1 <- function(dz, d_single, pop, folder){
   q <- q + facet_wrap(~bornSex)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_incidence_OVERLAYWITHSINGLE.png"))
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_incidence_OVERLAYWITH1PLUSDIAG.png"))
   
   # plot 2
   # number of diagnoses
   # age categories, by born sex
-  agg_single <- d_single[,
+  agg_oneplusdiag <- d_oneplusdiag[,
             .(
               N=.N
             ),keyby=.(
               bornSex,
               analysisAgeCat_z,
               analysisYear_z
-            )][CJ(unique(d_single$bornSex),
-                  unique(d_single$analysisAgeCat_z),
-                  unique(d_single$analysisYear_z))
+            )][CJ(unique(d_oneplusdiag$bornSex),
+                  unique(d_oneplusdiag$analysisAgeCat_z),
+                  unique(d_oneplusdiag$analysisYear_z))
                ,allow.cartesian= TRUE]
-  agg_single[is.na(N), N:=0]
+  agg_oneplusdiag[is.na(N), N:=0]
   
-  agg_single <- merge(agg_single,pop,
+  agg_oneplusdiag <- merge(agg_oneplusdiag,pop,
                by.x=c("analysisYear_z","bornSex","analysisAgeCat_z"),
                by.y=c("year","bornSex","ageCat"))
-  agg_single[,analysisAgeCat_z:=factor(analysisAgeCat_z,levels=c(
+  agg_oneplusdiag[,analysisAgeCat_z:=factor(analysisAgeCat_z,levels=c(
     "[0,18]",
     "(18,30]",
     "(30,50]",
     "(50,200]"
   ))]
-  agg_single[,definition:="Single diagnosis"]
+  agg_oneplusdiag[,definition:="1+ diagnoses"]
   
   agg <- dz[,
             .(
@@ -160,7 +160,7 @@ Analyses_1 <- function(dz, d_single, pop, folder){
   ))]
   agg[,definition:=folder]
   
-  agg_together <- rbind(agg_single, agg)
+  agg_together <- rbind(agg_oneplusdiag, agg)
   openxlsx::write.xlsx(agg_together, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_age.xlsx"))
   
   ## poisson regressions
@@ -283,7 +283,7 @@ Analyses_1 <- function(dz, d_single, pop, folder){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_age_incidence_OVERLAYWITHSINGLE.png"))
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_age_incidence_OVERLAYWITH1PLUSDIAG.png"))
   
   q <- ggplot(agg[analysisAgeCat_z=="[0,18]"],aes(x=analysisYear_z,y=N))
   q <- q + geom_line()
