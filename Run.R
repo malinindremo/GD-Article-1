@@ -41,6 +41,8 @@ fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"comorbidity"))
 fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"comorbidity_with_control_assigned"))
 fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"comorbidity_with_control_opposite"))
 
+fs::dir_create(fs::path(org::PROJ$DATA_RAW,"natasa"))
+
 ################
 # Load libraries
 ################
@@ -98,7 +100,7 @@ dz <- d[c_analysisCat_hybrid=="Hybrid" & excluded_hybrid=="No"]
 dz[,N:=1]
 comorbidity(dz=dz, folder="comorbidity")
 
-unique(d$c_analysisCat_hybrid)
+xtabs(~d$c_analysisCat_hybrid)
 dz <- d[c_analysisCat_hybrid %in% c("Hybrid","control_assigned") & excluded_hybrid=="No"]
 dz[,N:=1]
 comorbidity(dz=dz, folder="comorbidity_with_control_assigned")

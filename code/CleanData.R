@@ -126,6 +126,9 @@ CleanDataIncidentGD <- function(){
     
     c_isHormone=as.logical(max(c_isHormone, na.rm=T)),
     c_dateFirstHormone=min(FDATUM[c_isHormone==TRUE], na.rm=T),
+    c_dateFirstHormoneFTM=min(FDATUM[c_isHormoneFTM==TRUE], na.rm=T),
+    c_dateFirstHormoneMTF=min(FDATUM[c_isHormoneMTF==TRUE], na.rm=T),
+    c_dateFirstHormonePubBlock=min(FDATUM[c_isHormonePubBlock==TRUE], na.rm=T),
     c_isHormone_2006_01_to_2016_12=as.logical(max(c_isHormone_2006_01_to_2016_12, na.rm=T))
   ),by=.(LopNr)]
   nrow(rx)
@@ -648,41 +651,24 @@ CleanDataIncidentGD <- function(){
   xtabs(~d$c_analysisAgeCat_treatments)
   
   # date of first surgery or hormones
-  d[
-    !is.na(c_analysisCat_treatments) & 
-      c_dateFirstHormone>="2006-01-01", 
-    c_analysisCat_treatments_first_date_of_surgery_hormones:=as.Date("2100-01-01")]
+  d[,c_analysisCat_treatments_first_date_of_surgery_hormones:=as.Date("2100-01-01")]
   
-  d[
-    !is.na(c_analysisCat_treatments) & 
-      c_dateFirstHormone>="2006-01-01" &
-      c_dateFirstHormone <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
+  d[c_dateFirstHormone <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
     c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirstHormone]
   
-  d[
-    !is.na(c_analysisCat_treatments) & 
-      c_dateFirst_SurgicalMasectomy>="2006-01-01" &
-      c_dateFirst_SurgicalMasectomy <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
+  d[c_dateFirst_SurgicalMasectomy <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
     c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalMasectomy]
   
-  d[
-    !is.na(c_analysisCat_treatments) & 
-      c_dateFirst_SurgicalPenisAmp>="2006-01-01" & 
-      c_dateFirst_SurgicalPenisAmp <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
+  d[c_dateFirst_SurgicalPenisAmp <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
     c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalPenisAmp]
   
-  d[
-    !is.na(c_analysisCat_treatments) & 
-      c_dateFirst_SurgicalReconstVag>="2006-01-01" &
-      c_dateFirst_SurgicalReconstVag <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
+  d[c_dateFirst_SurgicalReconstVag <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
     c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalReconstVag]
   
-  d[
-    !is.na(c_analysisCat_treatments) & 
-      c_dateFirst_SurgicalPenisTestProsth>="2006-01-01" &
-      c_dateFirst_SurgicalPenisTestProsth <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
+  d[c_dateFirst_SurgicalPenisTestProsth <= c_analysisCat_treatments_first_date_of_surgery_hormones, 
     c_analysisCat_treatments_first_date_of_surgery_hormones:=c_dateFirst_SurgicalPenisTestProsth]
   
+  d[c_analysisCat_treatments_first_date_of_surgery_hormones=="2100-01-01",c_analysisCat_treatments_first_date_of_surgery_hormones:=NA]
   
   d[!is.na(c_analysisCat_treatments_first_date_of_surgery_hormones),c_analysisCat_treatments_years_to_first_date_of_surgery_hormones:=as.numeric(difftime(c_analysisCat_treatments_first_date_of_surgery_hormones,dateFirst_F64_089,units="days"))/365.25]
   
@@ -793,7 +779,7 @@ CleanDataIncidentGD <- function(){
   d[excluded_treatments=="No" & hadTranssexual_ICD_89==TRUE,excluded_treatments:="ICD8/9"]
   d[excluded_treatments=="No" & dateSexChange<dateFirst_F64_089,excluded_treatments:="Legal sex change"]
   d[excluded_treatments=="No" & is.na(dateFirst_F64_089) & !is.na(dateSexChange),excluded_treatments:="Legal sex change"]
-  d[excluded_treatments=="No" & c_analysisCat_treatments_first_date_of_surgery_hormones<c_analysisDate_treatments,excluded_treatments:="Hormones/surgery before F64.0/8/9 diag"]
+  d[excluded_treatments=="No" & c_analysisCat_treatments_first_date_of_surgery_hormones<dateFirst_F64_089,excluded_treatments:="Hormones/surgery before F64.0/8/9 diag"]
   d[,excluded_treatments:=factor(excluded_treatments,levels=c(
     "No",
     "ICD8/9",
@@ -807,10 +793,12 @@ CleanDataIncidentGD <- function(){
   d[excluded_diag=="No" & hadTranssexual_ICD_89==TRUE,excluded_diag:="ICD8/9"]
   d[excluded_diag=="No" & dateSexChange<dateFirst_F64_089,excluded_diag:="Legal sex change"]
   d[excluded_diag=="No" & is.na(dateFirst_F64_089) & !is.na(dateSexChange),excluded_diag:="Legal sex change"]
+  d[excluded_diag=="No" & c_analysisCat_treatments_first_date_of_surgery_hormones<dateFirst_F64_089,excluded_diag:="Hormones/surgery before F64.0/8/9 diag"]
   d[,excluded_diag:=factor(excluded_diag,levels=c(
     "No",
     "ICD8/9",
-    "Legal sex change"
+    "Legal sex change",
+    "Hormones/surgery before F64.0/8/9 diag"
   ))]
   xtabs(~d$excluded_diag)
   
@@ -890,6 +878,8 @@ CleanDataIncidentGD <- function(){
   setnames(d,"lopnr_fall","LopNr")
   
   for(i in 1:5) cat("**** DONE \n")
+  
+  d[, year_of_birth := lubridate::year(dob)]
   
   return(d)
 }

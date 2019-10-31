@@ -3,7 +3,7 @@ comorbidity <- function(dz,folder="comorbidity"){
   co <- stringr::str_subset(names(d),"^comorbid")
   
   # by sex age
-  res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid,bornSex, c_analysisAgeCat_hybrid), .SDcols = c("N",co)]
+  res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid, bornSex, c_analysisAgeCat_hybrid), .SDcols = c("N",co)]
   openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,folder,"by_sex_age.xlsx"))
   
   long <- melt.data.table(res,id.vars=c("c_analysisCat_hybrid","bornSex","c_analysisAgeCat_hybrid","N"))

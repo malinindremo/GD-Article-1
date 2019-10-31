@@ -1,4 +1,11 @@
 Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
+  legal_sexchange_applications <- readxl::read_excel(fs::path(org::PROJ$HOME,"structural_data","legal_sex_change.xlsx"))
+  setDT(legal_sexchange_applications)
+  legal_sexchange_applications[pop[ageCat=="All" & bornSex=="All"],on="year",pop:=pop]
+  setnames(legal_sexchange_applications, c("analysisYear_z","N","pop"))
+  legal_sexchange_applications[,definition:="Legal change"]
+  legal_sexchange_applications[,bornSex:="Total"]
+  
   agg_oneplusdiag <- d_oneplusdiag[,
                          .(
                            N=.N
@@ -70,6 +77,17 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   agg[,definition:=folder]
   
   agg_together <- rbind(agg_oneplusdiag, agg)
+  agg_together_total <- agg_together[,.(
+    N=sum(N),
+    pop=sum(pop)
+  ),keyby=.(
+    analysisYear_z,
+    ageCat,
+    definition
+    )]
+  agg_together_total[,bornSex:="Total"]
+  agg_together <- rbind(agg_together, agg_together_total)
+  agg_together <- rbind(agg_together,legal_sexchange_applications,fill=T)
   openxlsx::write.xlsx(agg_together, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex.xlsx"))
   
   q <- ggplot(agg,aes(x=analysisYear_z,y=N,colour=bornSex))
