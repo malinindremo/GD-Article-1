@@ -51,6 +51,7 @@ library(data.table)
 library(ggplot2)
 
 d <- CleanDataIncidentGD()
+natasa(d)
 
 d[LopNr == 20842]
 LossOfPeopleTreatments(d,type = "treatments")
