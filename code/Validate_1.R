@@ -1,7 +1,7 @@
 
 Validate_1 <- function(d,byvar){
   d[,xbyvar:=get(byvar)]
-  res <- d[excluded_treatments=="No",
+  res <- d[excluded=="No",
            .(
              N=.N,
              c_isHormone_2006_01_to_2016_12=sum(c_isHormone_2006_01_to_2016_12),

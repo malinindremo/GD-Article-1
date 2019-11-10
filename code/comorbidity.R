@@ -1,14 +1,15 @@
-comorbidity <- function(dz,folder="comorbidity"){
+comorbidity <- function(dz,folder="comorbidity", sex_variable){
+  dz[,analysis_sex:=get(sex_variable)]
   
-  co <- stringr::str_subset(names(d),"^comorbid")
+  co <- stringr::str_subset(names(dz),"^comorbid")
   
   # by sex age
-  res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid, bornSex, c_analysisAgeCat_hybrid), .SDcols = c("N",co)]
+  res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid, analysis_sex, c_analysisAgeCat_hybrid), .SDcols = c("N",co)]
   openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,folder,"by_sex_age.xlsx"))
   
-  long <- melt.data.table(res,id.vars=c("c_analysisCat_hybrid","bornSex","c_analysisAgeCat_hybrid","N"))
-  long[,cat:=glue::glue("{bornSex} {c_analysisAgeCat_hybrid}",
-                        bornSex=bornSex,
+  long <- melt.data.table(res,id.vars=c("c_analysisCat_hybrid","analysis_sex","c_analysisAgeCat_hybrid","N"))
+  long[,cat:=glue::glue("{analysis_sex} {c_analysisAgeCat_hybrid}",
+                        analysis_sex=analysis_sex,
                         c_analysisAgeCat_hybrid=c_analysisAgeCat_hybrid)]
   long[,cat:=factor(cat,levels=unique(long$cat))]
   long[,prop:=value/N]
@@ -24,12 +25,12 @@ comorbidity <- function(dz,folder="comorbidity"){
   SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"by_sex_age.png"))
   
   # by sex year
-  res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid, bornSex, c_analysisYear_hybrid), .SDcols = c("N",co)]
+  res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid, analysis_sex, c_analysisYear_hybrid), .SDcols = c("N",co)]
   openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,folder,"by_sex_year.xlsx"))
   
   
   for(cx in co){
-    to_plot <- res[,c("c_analysisCat_hybrid","bornSex","c_analysisYear_hybrid","N",cx),with=F]
+    to_plot <- res[,c("c_analysisCat_hybrid","analysis_sex","c_analysisYear_hybrid","N",cx),with=F]
     to_plot[,n:=get(cx)]
     to_plot[,p:=-9]
     to_plot[,l_95:=-9]
@@ -52,11 +53,11 @@ comorbidity <- function(dz,folder="comorbidity"){
     if(includes_controls){
       fit0 <- lm(
         outcome~c_analysisYear_hybrid+c_analysisCat_hybrid, 
-        data=expanded[bornSex=="Assigned female"]
+        data=expanded[analysis_sex=="Assigned female"]
       )
       fit1 <- lm(
         outcome~c_analysisYear_hybrid*c_analysisCat_hybrid, 
-        data=expanded[bornSex=="Assigned female"]
+        data=expanded[analysis_sex=="Assigned female"]
       )
       summary(fit0)
       summary(fit1)
@@ -65,11 +66,11 @@ comorbidity <- function(dz,folder="comorbidity"){
       
       fit0 <- lm(
         outcome~c_analysisYear_hybrid+c_analysisCat_hybrid, 
-        data=expanded[bornSex=="Assigned male"]
+        data=expanded[analysis_sex=="Assigned male"]
       )
       fit1 <- lm(
         outcome~c_analysisYear_hybrid*c_analysisCat_hybrid, 
-        data=expanded[bornSex=="Assigned male"]
+        data=expanded[analysis_sex=="Assigned male"]
       )
       summary(fit0)
       summary(fit1)
@@ -86,7 +87,7 @@ comorbidity <- function(dz,folder="comorbidity"){
     q <- q + geom_pointrange(position=position_dodge(width = 0.5))
     q <- q + geom_text(data=to_plot[c_analysisCat_hybrid=="Hybrid"],mapping=aes(label=glue::glue("{n}/{N}"),y=1.01),size=3,angle=90,hjust=0)
     if(includes_controls) q <- q + geom_text(data=to_plot[c_analysisCat_hybrid!="Hybrid"],mapping=aes(label=glue::glue("{n}/{N}"),y=1.11),size=3,angle=90,hjust=0)
-    q <- q + facet_wrap(~bornSex)
+    q <- q + facet_wrap(~analysis_sex)
     q <- q + scale_y_continuous("Percentage",labels=scales::percent,breaks=seq(0,1,0.2))
     q <- q + expand_limits(y=c(0,1.05))
     if(includes_controls) q <- q + expand_limits(y=c(0,1.15))
@@ -96,12 +97,12 @@ comorbidity <- function(dz,folder="comorbidity"){
   }
   
   # by age sex year
-  res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid, bornSex, c_analysisYearCat_hybrid, c_analysisAgeCat_hybrid), .SDcols = c("N",co)]
+  res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid, analysis_sex, c_analysisYearCat_hybrid, c_analysisAgeCat_hybrid), .SDcols = c("N",co)]
   openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,folder,"by_age_sex_year.xlsx"))
   
   #restricted_co <- c("comorbid_F84","comorbid_F90")
   for(cx in co){
-    to_plot <- res[,c("c_analysisCat_hybrid", "bornSex","c_analysisYearCat_hybrid","c_analysisAgeCat_hybrid","N",cx),with=F]
+    to_plot <- res[,c("c_analysisCat_hybrid", "analysis_sex","c_analysisYearCat_hybrid","c_analysisAgeCat_hybrid","N",cx),with=F]
     to_plot[,n:=get(cx)]
     to_plot[,p:=-9]
     to_plot[,l_95:=-9]
@@ -116,7 +117,7 @@ comorbidity <- function(dz,folder="comorbidity"){
     q <- q + geom_pointrange(position=position_dodge(width = 0.5))
     q <- q + geom_text(data=to_plot[c_analysisCat_hybrid=="Hybrid"],mapping=aes(label=glue::glue("{n}/{N}"),y=1.01),size=3,angle=90,hjust=0)
     if(nrow(to_plot[c_analysisCat_hybrid!="Hybrid"])>0) q <- q + geom_text(data=to_plot[c_analysisCat_hybrid!="Hybrid"],mapping=aes(label=glue::glue("{n}/{N}"),y=1.15),size=3,angle=90,hjust=0)
-    q <- q + facet_grid(bornSex~c_analysisAgeCat_hybrid)
+    q <- q + facet_grid(analysis_sex~c_analysisAgeCat_hybrid)
     q <- q + scale_y_continuous("Percentage",labels=scales::percent,breaks=seq(0,1,0.2))
     q <- q + expand_limits(y=c(0,1.1))
     if(nrow(to_plot[c_analysisCat_hybrid!="Hybrid"])>0) q <- q + expand_limits(y=c(0,1.25))

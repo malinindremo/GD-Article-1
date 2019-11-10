@@ -381,7 +381,7 @@ analyses_together <- function(dz, pop, folder){
   agg <- dz[,
             .(
               `Diagnoses (4+)`=sum(!is.na(c_analysisCat_diag)),
-              `Diagnosis + treatment`=sum(!is.na(c_analysisCat_treatments)),
+              `Diagnosis (1+) + treatment`=sum(!is.na(c_analysisCat_treatments)),
               Hybrid=sum(!is.na(c_analysisCat_hybrid))
             ),keyby=.(
               bornSex,
@@ -390,7 +390,7 @@ analyses_together <- function(dz, pop, folder){
                   unique(dz$c_analysisYear_hybrid))
                ,allow.cartesian= TRUE]
   
-  agg[c_analysisYear_hybrid<=2005,`Diagnosis + treatment`:=NA]
+  #agg[c_analysisYear_hybrid<=2005,`Diagnosis (1+) + treatment`:=NA]
   
   xlsx::write.xlsx(agg,
                    fs::path(org::PROJ$SHARED_TODAY,folder,"raw_numbers.xlsx"))
@@ -410,5 +410,10 @@ analyses_together <- function(dz, pop, folder){
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
   SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex.png"))
-  
 }
+
+
+
+
+
+

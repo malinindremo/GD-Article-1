@@ -8,7 +8,7 @@ extract_surv_percentile <- function(fit, p, fitdata){
 
 time_to_diagnosis <- function(d){
   pd <- d[
-      excluded_treatments %in% c("No") &
+      excluded %in% c("No") &
       dateFirst_F64_089 >= "2006-01-01" & 
       dateFirst_F64_089 <= "2015-12-31" &
       (c_analysisCat_treatments_years_to_first_date_of_surgery_hormones>=0 | is.na(c_analysisCat_treatments_years_to_first_date_of_surgery_hormones))
@@ -36,12 +36,14 @@ time_to_diagnosis <- function(d){
     ))
   
   pd <- d[
-    excluded_treatments %in% c("No","Hormones/surgery before F64.0/8/9 diag") &
+    excluded %in% c("No","Hormones/surgery before F64.0/8/9 diag") &
     dateFirst_F64_089 >= "2006-01-01" & 
     dateFirst_F64_089 <= "2015-12-31"]
   pd[,cat:="No hormones/surgery (diagnosis between 2006-01-01 and 2015-12-31)"]
-  pd[c_analysisCat_treatments=="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2015-12-31]",cat:="Hormones/surgery after diagnosis (diagnosis between 2006-01-01 and 2015-12-31)"]
-  pd[c_analysisCat_treatments=="numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2015-12-31]" & excluded_treatments=="Hormones/surgery before F64.0/8/9 diag",cat:="Hormones/surgery before diagnosis (diagnosis between 2006-01-01 and 2015-12-31)"]
+  pd[c_analysisCat_treatments=="numF64_089>=1 & hormones/surgery, first diag: [2001-01-01, 2015-12-31], first hormones/surgery>=2001-01-01",cat:="Hormones/surgery after diagnosis (diagnosis between 2006-01-01 and 2015-12-31)"]
+  pd[c_analysisCat_treatments=="numF64_089>=1 & hormones/surgery, first diag: [2001-01-01, 2015-12-31], first hormones/surgery>=2001-01-01" & excluded=="Hormones/surgery before F64.0/8/9 diag",cat:="Hormones/surgery before diagnosis (diagnosis between 2006-01-01 and 2015-12-31)"]
+  
+  xtabs(~pd$cat)
   
   retval <- vector("list",length=10)
   for(y in 2:9){
