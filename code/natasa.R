@@ -5,8 +5,7 @@ natasa <- function(d){
             
             "isBornMale",
             "bornSex",
-            "c_analysisSexAssigned_hybrid",
-            "c_analysisSexOpposite_hybrid",
+            "c_analysisSex_hybrid",
             
             "dateFirst_F64_089",
             "numF64_089",
@@ -66,8 +65,7 @@ natasa <- function(d){
   xtabs(~dn$isBornMale, addNA=T)
   labs[var=="isBornMale", description:="(Independent of time/hybrid): 0/FALSE = Female; 1/TRUE = Male"]
   labs[var=="bornSex", description:="(Independent of time/hybrid): Assigned sex at birth"]
-  labs[var=="c_analysisSexAssigned_hybrid", description:="Only applicable for 'hybrid' when comparing 'hybrid' to 'controls_assigned': Assigned sex at birth"]
-  labs[var=="c_analysisSexOpposite_hybrid", description:="Only applicable for 'hybrid' when comparing 'hybrid' to 'controls_opposite': Assigned sex at birth for cases, switched sex for controls"]
+  labs[var=="c_analysisSex_hybrid", description:="Only applicable for 'hybrid' when comparing 'hybrid' with 'controls_assigned' and 'controls_opposite': Assigned sex at birth for cases and controls_assigned, switched sex for controls_opposite"]
   
   unique(dn$dateFirst_F64_089)[1:10]
   labs[var=="dateFirst_F64_089", description:="(Independent of time/hybrid): The first observed date for a F64_089 diagnosis"]
@@ -147,7 +145,7 @@ natasa <- function(d){
     
     "Matched analyses:\r\n",
     "- lopnr_analysis_group identifies the groups for matching cases to controls (e.g. for lopnr_analysis_group==3 there should be 1 case and approx 10 matched controls)\r\n",
-    "- use 'c_analysisSexAssigned_hybrid' or 'c_analysisSexOpposite_hybrid' as the sex variable\r\n"
+    "- use 'c_analysisSex_hybrid' as the sex variable\r\n"
   )
   
   writeLines(important_info, fs::path(org::PROJ$DATA_RAW, "natasa", "important_info.txt"))

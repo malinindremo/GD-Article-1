@@ -5,6 +5,52 @@ OverwriteWithEarlist <- function(d,rows,resVarDate,resVarCat,valVarDate,valCat){
   d[rows,(resVarDate):=get(valVarDate)]
 }
 
+CleanDataPrevalenceGD <- function(){
+  
+  ov <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","ov.sas7bdat")))
+  sv <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","sv.sas7bdat")))
+  sex <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","kon.sas7bdat")))
+  
+  sex[,isBornMale:=kon==1]
+  sex[,bornSex:=ifelse(isBornMale,"Assigned male","Assigned female")]
+  sex[,kon:=NULL]
+  
+  ov[,type:="outpatient"]
+  sv[,type:="inpatient"]
+  patients <- rbind(ov,sv,fill=T)
+  
+  setorder(patients,LopNr,INDATUM)
+  
+  nrow(patients)
+  patients <- merge(patients,sex,by="LopNr", all.x=T)
+  nrow(patients)
+  
+  # diagnoses
+  patients[,isF64_089:=FALSE]
+  patients[,isF64_0:=FALSE]
+  patients[,isF64_89:=FALSE]
+  
+  loop_through <- c("HDIA",stringr::str_subset(names(patients), "^DIA"),stringr::str_subset(names(patients), "^EKOD"))
+  for(ii in seq_along(loop_through)){
+    cat("looping:", ii,"/",length(loop_through), "\n")
+    i <- loop_through[ii]
+    
+    patients[stringr::str_detect(get(i),"^F640"), isF64_0:=TRUE]
+    patients[stringr::str_detect(get(i),"^F648"), isF64_89:=TRUE]
+    patients[stringr::str_detect(get(i),"^F649"), isF64_89:=TRUE]
+    
+  }
+  patients[,isF64_089:=isF64_0 | isF64_89]
+  
+  patients[,year:=lubridate::year(INDATUM)]
+  patients <- patients[isF64_089==TRUE,c("LopNr","year","bornSex")]
+  patients <- unique(patients)
+  patients <- patients[,.(N=.N),keyby=.(year,bornSex)]
+  
+  return(patients)
+}
+  
+
 CleanDataIncidentGD <- function(){
   number_lines <- 900
   cat("****** Line 9 /",number_lines,"\n")
@@ -15,6 +61,9 @@ CleanDataIncidentGD <- function(){
   rx <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","ut_r_lmed_10218_2017.sas7bdat")))
   demografi <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","demografi.sas7bdat")))
   sex <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","kon.sas7bdat")))
+ 
+  #birth_reg <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","UT_MFR_BARN_10218_2017.sas7bdat"),encoding="UTF-8"))
+  #birth_reg <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","fp_lev_fall_och_kontroller_1.sas7bdat"),encoding="UTF-8"))
   
   cat("****** Line 21 /",number_lines,"\n")
   
@@ -30,12 +79,12 @@ CleanDataIncidentGD <- function(){
   sexChange[,konsbyte_datum:=NULL]
   
   # make sure that 'kon' is 'assigned sex at birth' (because at the moment it is just 'current sex') 
-  sex[sexChange,on='LopNr',sexChange:=T]
-  sex[sexChange==TRUE, kon:=as.character(abs(as.numeric(kon)-3))] # switch the sex at birth for people with sex changes
+  #sex[sexChange,on='LopNr',sexChange:=T]
+  #sex[sexChange==TRUE, kon:=as.character(abs(as.numeric(kon)-3))] # switch the sex at birth for people with sex changes
   sex[,isBornMale:=kon==1]
   sex[,bornSex:=ifelse(isBornMale,"Assigned male","Assigned female")]
   sex[,kon:=NULL]
-  sex[,sexChange:=NULL]
+  #sex[,sexChange:=NULL]
   
   ## DOB
   cat("****** Line 35 /",number_lines,"\n")
@@ -428,7 +477,7 @@ CleanDataIncidentGD <- function(){
   surgeries[["Larynx"]] <- c(
     "DQD40")
   
-  cat("****** (next part is going to take a long time) Line 418 /",number_lines,"\n")
+  cat("****** Line 418 /",number_lines,"\n")
   for(i in seq_along(surgeries)){
     newVar <- sprintf("isSurgical%s",names(surgeries)[i])
     newVar_2006_01_to_2016_12 <- sprintf("%s_2006_01_to_2016_12",newVar)
@@ -459,7 +508,7 @@ CleanDataIncidentGD <- function(){
   
   xtabs(~patients$num_F64_089)
   
-  cat("****** Line 449 /",number_lines,"\n")
+  cat("****** (next part is going to take a long time) Line 449 /",number_lines,"\n")
   patients <- patients[,.(
     ageFirst_F64_089=min(age[isF64_089==TRUE],na.rm=T),
     ageFirst_F64_0=min(age[isF64_0==T],na.rm=T),
@@ -620,13 +669,14 @@ CleanDataIncidentGD <- function(){
   # #### exclusions
   d[,excluded:="No"]
   d[excluded=="No" & hadTranssexual_ICD_89==TRUE,excluded:="ICD8/9"]
-  d[excluded=="No" & dateSexChange<dateFirst_F64_089,excluded:="Legal sex change"]
-  d[excluded=="No" & is.na(dateFirst_F64_089) & !is.na(dateSexChange),excluded:="Legal sex change"]
+  d[excluded=="No" & is.na(dateFirst_F64_089) & !is.na(dateSexChange),excluded:="Legal sex change (no F64.0/8/9 diag)"]
+  d[excluded=="No" & dateSexChange<dateFirst_F64_089,excluded:="Legal sex change before F64.0/8/9 diag"]
   d[excluded=="No" & c_dateFirst_surgery_hormones<dateFirst_F64_089,excluded:="Hormones/surgery before F64.0/8/9 diag"]
   d[,excluded:=factor(excluded,levels=c(
     "No",
     "ICD8/9",
-    "Legal sex change",
+    "Legal sex change (no F64.0/8/9 diag)",
+    "Legal sex change before F64.0/8/9 diag",
     "Hormones/surgery before F64.0/8/9 diag"
   ))]
   xtabs(~d$excluded)
@@ -738,12 +788,12 @@ CleanDataIncidentGD <- function(){
   # creating analysis sex variables
   
   # for controls_assigned, everyone stays the sex they were assigned at birth
-  d[c_analysisCat_hybrid %in% c("Hybrid","control_assigned"), c_analysisSexAssigned_hybrid:=bornSex]
+  d[c_analysisCat_hybrid %in% c("Hybrid","control_assigned"), c_analysisSex_hybrid:=bornSex]
   
-  # for controls_opposite, the hybrid diagnosed people need to switch their sexes
-  d[c_analysisCat_hybrid %in% c("Hybrid","control_opposite"), c_analysisSexOpposite_hybrid:=bornSex]
-  d[c_analysisCat_hybrid=="control_opposite" & bornSex=="Assigned male", c_analysisSexOpposite_hybrid:="Assigned female"]
-  d[c_analysisCat_hybrid=="control_opposite" & bornSex=="Assigned female", c_analysisSexOpposite_hybrid:="Assigned male"]
+  # for controls_opposite, the hybrid diagnosed controls need to switch their sexes
+  d[c_analysisCat_hybrid %in% c("Hybrid","control_opposite"), c_analysisSex_hybrid:=bornSex]
+  d[c_analysisCat_hybrid=="control_opposite" & bornSex=="Assigned male", c_analysisSex_hybrid:="Assigned female"]
+  d[c_analysisCat_hybrid=="control_opposite" & bornSex=="Assigned female", c_analysisSex_hybrid:="Assigned male"]
   
   # end including matched controls
   

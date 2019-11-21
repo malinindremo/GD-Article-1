@@ -50,6 +50,7 @@ fs::dir_create(fs::path(org::PROJ$DATA_RAW,"natasa"))
 library(data.table)
 library(ggplot2)
 
+prev <- CleanDataPrevalenceGD()
 d <- CleanDataIncidentGD()
 natasa(d)
 
@@ -88,7 +89,12 @@ dz[,analysisAgeCat_z:=c_analysisAgeCat_hybrid]
 Analyses_1(dz=dz, d_oneplusdiag=d_oneplusdiag,pop=GetPop(), folder="analyses_hybrid")
 
 dz <- d[c_analysisCat_hybrid=="Hybrid" & excluded=="No"]
-analyses_together(dz,pop=GetPop(), folder="analyses_together")
+analyses_together(
+  dz,
+  d_oneplusdiag=d_oneplusdiag,
+  prev=prev,
+  pop=GetPop(),
+  folder="analyses_together")
 
 # losing people?
 dz <- d[c_analysisCat_hybrid=="Hybrid"]
@@ -99,20 +105,37 @@ sink()
 # comorbidity
 dz <- d[c_analysisCat_hybrid=="Hybrid" & excluded=="No"]
 dz[,N:=1]
-comorbidity(dz=dz, folder="comorbidity", sex_variable = "bornSex")
+comorbidity(dz=dz, folder="comorbidity")
 
 xtabs(~d$c_analysisCat_hybrid)
 dz <- d[c_analysisCat_hybrid %in% c("Hybrid","control_assigned") & excluded=="No"]
 dz[,N:=1]
-comorbidity(dz=dz, folder="comorbidity_with_control_assigned", sex_variable = "c_analysisSexAssigned_hybrid")
+comorbidity(dz=dz, folder="comorbidity_with_control_assigned")
 
 unique(d$c_analysisCat_hybrid)
 dz <- d[c_analysisCat_hybrid %in% c("Hybrid","control_opposite") & excluded=="No"]
 dz[,N:=1]
-comorbidity(dz=dz, folder="comorbidity_with_control_opposite", sex_variable = "c_analysisSexAssigned_hybrid")
+comorbidity(dz=dz, folder="comorbidity_with_control_opposite")
 
 
 # end?
+
+# check some genders
+
+# person who has had legal sex change
+b <- d[lopnr_analysis_group==83054,c(
+  "c_analysisCat_hybrid","bornSex","c_analysisSex_hybrid","dateSexChange"
+)]
+setorder(b,c_analysisCat_hybrid,bornSex)
+b
+
+# person who has NOT had legal sex change
+b <- d[lopnr_analysis_group==64567,c(
+  "c_analysisCat_hybrid","bornSex","c_analysisSex_hybrid","dateSexChange"
+)]
+setorder(b,c_analysisCat_hybrid,bornSex)
+b
+
 
 ### STOP RUNNING CODE HERE
 d[,c_dateFirstHormoneSurgery]

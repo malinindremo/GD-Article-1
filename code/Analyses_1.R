@@ -7,18 +7,18 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   legal_sexchange_applications[,bornSex:="Total"]
   
   agg_oneplusdiag <- d_oneplusdiag[,
-                         .(
-                           N=.N
-                         ),keyby=.(
-                           bornSex,
-                           analysisCat_z,
-                           analysisYear_z
-                         )][CJ(unique(d_oneplusdiag$bornSex),
-                               unique(d_oneplusdiag$analysisCat_z),
-                               unique(d_oneplusdiag$analysisYear_z))
-                            ,allow.cartesian= TRUE]
+                                   .(
+                                     N=.N
+                                   ),keyby=.(
+                                     bornSex,
+                                     analysisCat_z,
+                                     analysisYear_z
+                                   )][CJ(unique(d_oneplusdiag$bornSex),
+                                         unique(d_oneplusdiag$analysisCat_z),
+                                         unique(d_oneplusdiag$analysisYear_z))
+                                      ,allow.cartesian= TRUE]
   agg_oneplusdiag[is.na(N), N:=0]
-
+  
   agg <- dz[,
             .(
               N=.N
@@ -45,19 +45,19 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   # number of diagnoses
   # all ages, by born sex
   agg_oneplusdiag <- d_oneplusdiag[,
-            .(
-              N=.N
-            ),keyby=.(
-              bornSex,
-              analysisYear_z
-            )][CJ(unique(d_oneplusdiag$bornSex),
-                  unique(d_oneplusdiag$analysisYear_z))
-               ,allow.cartesian= TRUE]
+                                   .(
+                                     N=.N
+                                   ),keyby=.(
+                                     bornSex,
+                                     analysisYear_z
+                                   )][CJ(unique(d_oneplusdiag$bornSex),
+                                         unique(d_oneplusdiag$analysisYear_z))
+                                      ,allow.cartesian= TRUE]
   agg_oneplusdiag[is.na(N), N:=0]
   
   agg_oneplusdiag <- merge(agg_oneplusdiag,pop[ageCat=="All"],
-               by.x=c("analysisYear_z","bornSex"),
-               by.y=c("year","bornSex"))
+                           by.x=c("analysisYear_z","bornSex"),
+                           by.y=c("year","bornSex"))
   agg_oneplusdiag[,definition:="1+ diagnoses"]
   
   agg <- dz[,
@@ -84,7 +84,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
     analysisYear_z,
     ageCat,
     definition
-    )]
+  )]
   agg_together_total[,bornSex:="Total"]
   agg_together <- rbind(agg_together, agg_together_total)
   agg_together <- rbind(agg_together,legal_sexchange_applications,fill=T)
@@ -131,21 +131,21 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   # number of diagnoses
   # age categories, by born sex
   agg_oneplusdiag <- d_oneplusdiag[,
-            .(
-              N=.N
-            ),keyby=.(
-              bornSex,
-              analysisAgeCat_z,
-              analysisYear_z
-            )][CJ(unique(d_oneplusdiag$bornSex),
-                  unique(d_oneplusdiag$analysisAgeCat_z),
-                  unique(d_oneplusdiag$analysisYear_z))
-               ,allow.cartesian= TRUE]
+                                   .(
+                                     N=.N
+                                   ),keyby=.(
+                                     bornSex,
+                                     analysisAgeCat_z,
+                                     analysisYear_z
+                                   )][CJ(unique(d_oneplusdiag$bornSex),
+                                         unique(d_oneplusdiag$analysisAgeCat_z),
+                                         unique(d_oneplusdiag$analysisYear_z))
+                                      ,allow.cartesian= TRUE]
   agg_oneplusdiag[is.na(N), N:=0]
   
   agg_oneplusdiag <- merge(agg_oneplusdiag,pop,
-               by.x=c("analysisYear_z","bornSex","analysisAgeCat_z"),
-               by.y=c("year","bornSex","ageCat"))
+                           by.x=c("analysisYear_z","bornSex","analysisAgeCat_z"),
+                           by.y=c("year","bornSex","ageCat"))
   agg_oneplusdiag[,analysisAgeCat_z:=factor(analysisAgeCat_z,levels=c(
     "[0,18]",
     "(18,30]",
@@ -177,6 +177,15 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
     "(50,200]"
   ))]
   agg[,definition:=folder]
+  
+  agg_sexes_together <- agg[,.(
+    N=sum(N),
+    pop=sum(pop)
+  ),keyby=.(
+    analysisYear_z,
+    analysisAgeCat_z,
+    definition
+  )]
   
   agg_together <- rbind(agg_oneplusdiag, agg)
   openxlsx::write.xlsx(agg_together, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_age.xlsx"))
@@ -255,6 +264,83 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   )
   p[["Within (50,200], testing time*assigned sex"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
   
+  #####
+  
+  fit0 <- glm(
+    N~offset(log(pop)),
+    data=agg[analysisAgeCat_z=="[0,18]" & bornSex=="Assigned male"],
+    family="poisson"
+  )
+  fit1 <- glm(
+    N~analysisYear_z+offset(log(pop)),
+    data=agg[analysisAgeCat_z=="[0,18]" & bornSex=="Assigned male"],
+    family="poisson"
+  )
+  p[["Within [0,18] & assigned male, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  
+  fit0 <- glm(
+    N~offset(log(pop)),
+    data=agg[analysisAgeCat_z=="[0,18]" & bornSex=="Assigned female"],
+    family="poisson"
+  )
+  fit1 <- glm(
+    N~analysisYear_z+offset(log(pop)),
+    data=agg[analysisAgeCat_z=="[0,18]" & bornSex=="Assigned female"],
+    family="poisson"
+  )
+  p[["Within [0,18] & assigned female, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  
+  #####
+  
+  fit0 <- glm(
+    N~offset(log(pop)),
+    data=agg[analysisAgeCat_z=="(30,50]" & bornSex=="Assigned male"],
+    family="poisson"
+  )
+  fit1 <- glm(
+    N~analysisYear_z+offset(log(pop)),
+    data=agg[analysisAgeCat_z=="(30,50]" & bornSex=="Assigned male"],
+    family="poisson"
+  )
+  p[["Within (30,50] & assigned male, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  
+  fit0 <- glm(
+    N~offset(log(pop)),
+    data=agg[analysisAgeCat_z=="(30,50]" & bornSex=="Assigned female"],
+    family="poisson"
+  )
+  fit1 <- glm(
+    N~analysisYear_z+offset(log(pop)),
+    data=agg[analysisAgeCat_z=="(30,50]" & bornSex=="Assigned female"],
+    family="poisson"
+  )
+  p[["Within (30,50] & assigned female, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  
+  #####
+  
+  fit0 <- glm(
+    N~offset(log(pop)),
+    data=agg_sexes_together[analysisAgeCat_z=="(18,30]"],
+    family="poisson"
+  )
+  fit1 <- glm(
+    N~analysisYear_z+offset(log(pop)),
+    data=agg_sexes_together[analysisAgeCat_z=="(18,30]"],
+    family="poisson"
+  )
+  p[["Within (18,30], testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  
+  fit0 <- glm(
+    N~offset(log(pop)),
+    data=agg_sexes_together[analysisAgeCat_z=="(50,200]"],
+    family="poisson"
+  )
+  fit1 <- glm(
+    N~analysisYear_z+offset(log(pop)),
+    data=agg_sexes_together[analysisAgeCat_z=="(50,200]"],
+    family="poisson"
+  )
+  p[["Within (50,200], testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
   
   p <- rbindlist(lapply(p, as.data.frame), idcol = "id")
   setnames(p, c("id","pval"))
@@ -377,7 +463,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
 
 
 
-analyses_together <- function(dz, pop, folder){
+analyses_together <- function(dz, d_oneplusdiag, prev, pop, folder){
   agg <- dz[,
             .(
               `Diagnoses (4+)`=sum(!is.na(c_analysisCat_diag)),
@@ -390,12 +476,38 @@ analyses_together <- function(dz, pop, folder){
                   unique(dz$c_analysisYear_hybrid))
                ,allow.cartesian= TRUE]
   
-  #agg[c_analysisYear_hybrid<=2005,`Diagnosis (1+) + treatment`:=NA]
+  agg_1p <- d_oneplusdiag[,
+            .(
+              `Diagnoses (1+)`=sum(!is.na(c_analysisAge_oneplusdiag))
+            ),keyby=.(
+              bornSex,
+              c_analysisYear_oneplusdiag
+            )][CJ(unique(d_oneplusdiag$bornSex),
+                  unique(d_oneplusdiag$c_analysisYear_oneplusdiag))
+               ,allow.cartesian= TRUE]
+  
+  agg[agg_1p,on=c("bornSex==bornSex","c_analysisYear_hybrid==c_analysisYear_oneplusdiag"),`Diagnoses (1+)`:=`Diagnoses (1+)`]
+  
+  agg[prev,on=c("bornSex==bornSex","c_analysisYear_hybrid==year"),`Prevalence (1+ diag)`:=N]
   
   xlsx::write.xlsx(agg,
                    fs::path(org::PROJ$SHARED_TODAY,folder,"raw_numbers.xlsx"))
   
   long <- melt.data.table(agg, id.vars=c("bornSex","c_analysisYear_hybrid"))
+  
+  q <- ggplot(long[variable!="Prevalence (1+ diag)"],aes(x=c_analysisYear_hybrid,y=value,colour=variable))
+  q <- q + geom_line()
+  q <- q + geom_point()
+  q <- q + scale_color_brewer("",palette="Set1")
+  q <- q + scale_x_continuous("Year",
+                              breaks=seq(2001,2020,2))
+  q <- q + scale_y_continuous("Number of people")
+  q <- q + expand_limits(y=0)
+  q <- q + facet_wrap(~bornSex)
+  q <- q + theme_gray(16)
+  q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+  q
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex.png"))
   
   q <- ggplot(long,aes(x=c_analysisYear_hybrid,y=value,colour=variable))
   q <- q + geom_line()
@@ -409,7 +521,9 @@ analyses_together <- function(dz, pop, folder){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex.png"))
+  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_with_prevalence.png"))
+  
+  
 }
 
 
