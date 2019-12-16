@@ -51,7 +51,7 @@ CleanDataPrevalenceGD <- function(){
 }
   
 
-CleanDataIncidentGD <- function(){
+CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   number_lines <- 900
   cat("****** Line 9 /",number_lines,"\n")
   links_assigned <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","fp_lev_fall_och_kontroller_1.sas7bdat")))
@@ -139,10 +139,12 @@ CleanDataIncidentGD <- function(){
   rx[,c_isHormoneMTF:=isHormoneMTF]
   rx[,c_isHormonePubBlock:=isHormonePubBlock]
   
-  rx[isBornMale==TRUE,c_isHormoneFTM:=FALSE]
-  rx[isBornMale==FALSE,c_isHormoneMTF:=FALSE]
+  if(apply_sex_age_cleaning==TRUE){
+    rx[isBornMale==TRUE,c_isHormoneFTM:=FALSE]
+    rx[isBornMale==FALSE,c_isHormoneMTF:=FALSE]
   # puberty blockers for 19+ year olds are discarded
-  rx[isHormonePubBlock==TRUE & age>=19,c_isHormonePubBlock:=FALSE]
+    rx[isHormonePubBlock==TRUE & age>=19,c_isHormonePubBlock:=FALSE]
+  }
   rx[,age:=NULL]
   
   rx[,isHormone:=isHormoneMTF | isHormoneFTM | isHormonePubBlock]

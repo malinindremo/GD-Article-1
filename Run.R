@@ -51,7 +51,7 @@ library(data.table)
 library(ggplot2)
 
 prev <- CleanDataPrevalenceGD()
-d <- CleanDataIncidentGD()
+d <- CleanDataIncidentGD(apply_sex_age_cleaning=TRUE)
 natasa(d)
 
 d[LopNr == 20842]
