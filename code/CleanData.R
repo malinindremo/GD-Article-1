@@ -819,22 +819,22 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   # dateFirst_F64_089
   xtabs(~d$numF64_089_2006_01_to_2014_12,addNA=T)
   d[,c_analysisCat_F64_089_ge10:="00 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12==1,c_analysisCat_F64_089_ge10:="01 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12==2,c_analysisCat_F64_089_ge10:="02 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12==3,c_analysisCat_F64_089_ge10:="03 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12==4,c_analysisCat_F64_089_ge10:="04 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12==5,c_analysisCat_F64_089_ge10:="05 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12==6,c_analysisCat_F64_089_ge10:="06 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12==7,c_analysisCat_F64_089_ge10:="07 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12==8,c_analysisCat_F64_089_ge10:="08 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12==9,c_analysisCat_F64_089_ge10:="09 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12>=10,c_analysisCat_F64_089_ge10:="10+ F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==1,c_analysisCat_F64_089_ge10:="01 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==2,c_analysisCat_F64_089_ge10:="02 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==3,c_analysisCat_F64_089_ge10:="03 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==4,c_analysisCat_F64_089_ge10:="04 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==5,c_analysisCat_F64_089_ge10:="05 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==6,c_analysisCat_F64_089_ge10:="06 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==7,c_analysisCat_F64_089_ge10:="07 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==8,c_analysisCat_F64_089_ge10:="08 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==9,c_analysisCat_F64_089_ge10:="09 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12>=10,c_analysisCat_F64_089_ge10:="10+ F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
   
   d[,c_analysisCat_F64_089_ge4:="0 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12==1,c_analysisCat_F64_089_ge4:="1 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12==2,c_analysisCat_F64_089_ge4:="2 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12==3,c_analysisCat_F64_089_ge4:="3 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[numF64_089_2006_01_to_2014_12>=4,c_analysisCat_F64_089_ge4:="4+ F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==1,c_analysisCat_F64_089_ge4:="1 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==2,c_analysisCat_F64_089_ge4:="2 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==3,c_analysisCat_F64_089_ge4:="3 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12>=4,c_analysisCat_F64_089_ge4:="4+ F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
   
   xtabs(~d$c_analysisCat_F64_089_ge10,addNA=T)
   xtabs(~d$c_analysisCat_F64_089_ge4,addNA=T)

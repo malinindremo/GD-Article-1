@@ -54,6 +54,32 @@ prev <- CleanDataPrevalenceGD()
 d <- CleanDataIncidentGD(apply_sex_age_cleaning=TRUE)
 natasa(d)
 
+# numbers
+sink(fs::path(org::PROJ$SHARED_TODAY,"numbers.txt"))
+print("numbers of people with an F64_089 diagnosis")
+sum(d$numF64_089 >= 1,na.rm=T) # 4378
+print("numbers of people with first F64_089 >= 2001-01-01")
+sum(d$dateFirst_F64_089 >= "2001-01-01",na.rm=T) # 4378
+print("looking at exclusions")
+xtabs(~excluded, data=d[dateFirst_F64_089 >= "2001-01-01"])
+print("excluded 100 due to ICD8/9")
+print("excluded 22 due to legal sex change before F64/0/8/9 diag")
+print("excluded 166 due to Hormones/surgery before F64.0/8/9 diag")
+print("left with 4090 people")
+print("looking at validation dataset [2006-2014]")
+print(nrow(d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & excluded=="No"]))
+print("looking at trend dataset [2001-2015]")
+print(nrow(d[dateFirst_F64_089 >= "2001-01-01" & dateFirst_F64_089 <= "2015-12-31" & excluded=="No"]))
+sink()
+
+
+nrow(d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & excluded=="No"])
+sum(d[excluded=="No"]$c_analysisCat_F64_089_ge4!="0 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]")
+sum(d[excluded=="No" & dateFirst_F64_089 >= "2006-01-01"]$c_analysisCat_F64_089_ge4!="0 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]")
+nrow(d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & excluded=="No"])
+
+sum(!is.na(d[excluded=="No"]$c_analysisCat_oneplusdiag))
+
 d[LopNr == 20842]
 #LossOfPeopleTreatments(d,type = "treatments")
 #LossOfPeopleTreatments(d,type = "diag")

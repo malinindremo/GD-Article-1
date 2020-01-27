@@ -1,3 +1,15 @@
+extract_poisson <- function(fit, var="analysisYear_z"){
+  est <- coef(fit)[var]
+  se <- sqrt(vcov(fit)[var,var])
+  retval <- glue::glue(
+    "{es} ({l}, {u})",
+    es=formatC(exp(est), digits=2, format="f"),
+    l=formatC(exp(est-1.96*se), digits=2, format="f"),
+    u=formatC(exp(est+1.96*se), digits=2, format="f")
+  )
+  return(retval)
+}
+
 Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   legal_sexchange_applications <- readxl::read_excel(fs::path(org::PROJ$HOME,"structural_data","legal_sex_change.xlsx"))
   setDT(legal_sexchange_applications)
@@ -192,6 +204,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   
   ## poisson regressions
   p <- list()
+  est <- list()
   fit0 <- glm(
     N~analysisYear_z+analysisAgeCat_z+offset(log(pop)),
     data=agg[bornSex=="Assigned female"],
@@ -277,6 +290,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
     family="poisson"
   )
   p[["Within [0,18] & assigned male, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  est[["Within [0,18] & assigned male, testing time"]] <- extract_poisson(fit1)
   
   fit0 <- glm(
     N~offset(log(pop)),
@@ -289,6 +303,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
     family="poisson"
   )
   p[["Within [0,18] & assigned female, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  est[["Within [0,18] & assigned female, testing time"]] <- extract_poisson(fit1)
   
   #####
   
@@ -303,6 +318,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
     family="poisson"
   )
   p[["Within (30,50] & assigned male, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  est[["Within (30,50] & assigned male, testing time"]] <- extract_poisson(fit1)
   
   fit0 <- glm(
     N~offset(log(pop)),
@@ -315,6 +331,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
     family="poisson"
   )
   p[["Within (30,50] & assigned female, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  est[["Within (30,50] & assigned female, testing time"]] <- extract_poisson(fit1)
   
   #####
   
@@ -329,6 +346,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
     family="poisson"
   )
   p[["Within (18,30], testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  est[["Within (18,30], testing time"]] <- extract_poisson(fit1)
   
   fit0 <- glm(
     N~offset(log(pop)),
@@ -341,12 +359,18 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
     family="poisson"
   )
   p[["Within (50,200], testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  est[["Within (50,200], testing time"]] <- extract_poisson(fit1)
   
   p <- rbindlist(lapply(p, as.data.frame), idcol = "id")
   setnames(p, c("id","pval"))
   p[,pval:=formatC(round(pval,2),format="f", digits=2)]
   p[,pretty_val:=glue::glue("{id}: pvalue={pval}",id=id,pval=pval)]
-  caption <- glue::glue_collapse(p$pretty_val, sep = "\n")
+  
+  est <- rbindlist(lapply(est, as.data.frame), idcol = "id")
+  setnames(est, c("id","es"))
+  est[,pretty_val:=glue::glue("{id}: est={es}",id=id,es=es)]
+  
+  caption <- glue::glue_collapse(c(p$pretty_val, est$pretty_val), sep = "\n")
   
   q <- ggplot(agg,aes(x=analysisYear_z,y=N,colour=analysisAgeCat_z))
   q <- q + geom_line()
