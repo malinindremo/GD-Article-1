@@ -127,6 +127,7 @@ natasa <- function(d){
   sum(is.na(dn[c_analysisCat_hybrid=="control_assigned"]$dateFirst_F64_089))
   
   important_info <- glue::glue(
+    "UPDATED 2020-02-01\r\n",
     "There are definitions of people who are useful to know/understand, but not analysed:\r\n",
     "- 'oneplusdiag' (variable=c_analysisCat_oneplusdiag; numF64_089>=1, first diag: [2001-01-01, 2015-12-31])\r\n",
     "- 'treatments' (variable=c_analysisCat_treatments; numF64_089>=1 & hormones/surgery, first diag: [2006-01-01, 2015-12-31])\r\n",

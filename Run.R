@@ -30,6 +30,7 @@ org::InitialiseProject(
   )
 )
 
+fs::dir_create(fs::path(org::PROJ$DATA_RAW,"clean"))
 fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"descriptives"))
 fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"validation"))
 fs::dir_create(fs::path(org::PROJ$SHARED_TODAY,"analyses_diag"))
@@ -53,6 +54,11 @@ library(ggplot2)
 prev <- CleanDataPrevalenceGD()
 d <- CleanDataIncidentGD(apply_sex_age_cleaning=TRUE)
 natasa(d)
+saveRDS(d, file=fs::path(org::PROJ$DATA_RAW,"clean","dz.RDS"))
+saveRDS(d, file=fs::path(org::PROJ$DATA_RAW,"natasa","dz.RDS"))
+haven::write_sav(d, fs::path(org::PROJ$DATA_RAW, "natasa", "dz.sav"))
+
+d <- readRDS(file=fs::path(org::PROJ$DATA_RAW,"natasa","dz.RDS"))
 
 # numbers
 sink(fs::path(org::PROJ$SHARED_TODAY,"numbers.txt"))
