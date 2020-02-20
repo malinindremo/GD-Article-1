@@ -1,5 +1,3 @@
-YearN <- function(x) as.numeric(format.Date(x, "%G"))
-
 OverwriteWithEarlist <- function(d,rows,resVarDate,resVarCat,valVarDate,valCat){
   d[rows,(resVarCat):=valCat]
   d[rows,(resVarDate):=get(valVarDate)]
@@ -75,7 +73,7 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
     stringr::str_sub(konsbyte_datum,5,6),
     stringr::str_sub(konsbyte_datum,7,8)
   ))]
-  sexChange[,yearSexChange:=YearN(dateSexChange)]
+  sexChange[,yearSexChange:=lubridate::year(dateSexChange)]
   sexChange[,konsbyte_datum:=NULL]
   
   # make sure that 'kon' is 'assigned sex at birth' (because at the moment it is just 'current sex') 
@@ -171,24 +169,29 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   rx[FDATUM > "2016-12-31",c_isHormone_2006_01_to_2016_12:=FALSE]
   
   cat("****** Line 116 /",number_lines,"\n")
+  
+  x1 <- length(unique(rx[isHormone==T]$LopNr))
+  x2 <- length(unique(rx[c_isHormone_2006_01_to_2016_12==T]$LopNr))
   # collapse down to 1 row/person
   rx <- rx[,.(
-    isHormone=as.logical(max(isHormone, na.rm=T)),
+    isHormone=max(isHormone),
     dateFirstHormone=min(FDATUM[isHormone==TRUE], na.rm=T),
-    isHormone_2006_01_to_2016_12=as.logical(max(isHormone_2006_01_to_2016_12, na.rm=T)),
+    isHormone_2006_01_to_2016_12=max(isHormone_2006_01_to_2016_12),
     
-    isHormoneMTF_2006_01_to_2016_12=as.logical(max(isHormoneMTF_2006_01_to_2016_12, na.rm=T)),
-    isHormoneFTM_2006_01_to_2016_12=as.logical(max(isHormoneFTM_2006_01_to_2016_12, na.rm=T)),
-    isHormonePubBlock_2006_01_to_2016_12=as.logical(max(isHormonePubBlock_2006_01_to_2016_12, na.rm=T)),
+    isHormoneMTF_2006_01_to_2016_12=max(isHormoneMTF_2006_01_to_2016_12),
+    isHormoneFTM_2006_01_to_2016_12=max(isHormoneFTM_2006_01_to_2016_12),
+    isHormonePubBlock_2006_01_to_2016_12=max(isHormonePubBlock_2006_01_to_2016_12),
     
-    c_isHormone=as.logical(max(c_isHormone, na.rm=T)),
+    c_isHormone=max(c_isHormone),
     c_dateFirstHormone=min(FDATUM[c_isHormone==TRUE], na.rm=T),
     c_dateFirstHormoneFTM=min(FDATUM[c_isHormoneFTM==TRUE], na.rm=T),
     c_dateFirstHormoneMTF=min(FDATUM[c_isHormoneMTF==TRUE], na.rm=T),
     c_dateFirstHormonePubBlock=min(FDATUM[c_isHormonePubBlock==TRUE], na.rm=T),
-    c_isHormone_2006_01_to_2016_12=as.logical(max(c_isHormone_2006_01_to_2016_12, na.rm=T))
+    c_isHormone_2006_01_to_2016_12=max(c_isHormone_2006_01_to_2016_12)
   ),by=.(LopNr)]
   nrow(rx)
+  stopifnot(sum(rx$isHormone==T,na.rm=T)==x1)
+  stopifnot(sum(rx$c_isHormone_2006_01_to_2016_12==T,na.rm=T)==x2)
   for(i in names(rx)){
     rx[is.infinite(get(i)),(i):=NA]
   }
@@ -437,6 +440,10 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   patients[INDATUM < "2006-01-01",isF64_089_2006_01_to_2014_12:=FALSE]
   patients[INDATUM > "2014-12-31",isF64_089_2006_01_to_2014_12:=FALSE]
   
+  patients[,isF64_089_2006_01_to_2016_12:=isF64_089]
+  patients[INDATUM < "2006-01-01",isF64_089_2006_01_to_2016_12:=FALSE]
+  patients[INDATUM > "2016-12-31",isF64_089_2006_01_to_2016_12:=FALSE]
+  
   # surgeries
   surgeries <- list()
   surgeries[["Masectomy"]] <- c(
@@ -511,6 +518,8 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   xtabs(~patients$num_F64_089)
   
   cat("****** (next part is going to take a long time) Line 449 /",number_lines,"\n")
+  x1 <- length(unique(patients[isSurgicalMasectomy_2006_01_to_2016_12==T]$LopNr))
+  x2 <- length(unique(patients[isSurgicalPenisTestProsth_2006_01_to_2016_12==T]$LopNr))
   patients <- patients[,.(
     ageFirst_F64_089=min(age[isF64_089==TRUE],na.rm=T),
     ageFirst_F64_0=min(age[isF64_0==T],na.rm=T),
@@ -533,24 +542,25 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
     date_F64_089_9=min(INDATUM[num_F64_089==9],na.rm=T),
     date_F64_089_10=min(INDATUM[num_F64_089==10],na.rm=T),
     
-    hadTranssexual_ICD_89=as.logical(max(isTranssexual_ICD_89,na.rm=T)),
+    hadTranssexual_ICD_89=max(isTranssexual_ICD_89,na.rm=T),
     
     numF64_089_2006_01_to_2014_12=sum(isF64_089_2006_01_to_2014_12,na.rm=T),
+    numF64_089_2006_01_to_2016_12=sum(isF64_089_2006_01_to_2016_12,na.rm=T),
     
     numF64_089=sum(isF64_089,na.rm=T),
     numF64_0=sum(isF64_0,na.rm=T),
     numF64_89=sum(isF64_89,na.rm=T),
     
-    isSurgicalMasectomy_2006_01_to_2016_12=as.logical(max(isSurgicalMasectomy_2006_01_to_2016_12,na.rm=T)),
+    isSurgicalMasectomy_2006_01_to_2016_12=max(isSurgicalMasectomy_2006_01_to_2016_12),
     dateFirst_SurgicalMasectomy=min(INDATUM[isSurgicalMasectomy==TRUE],na.rm=T),
     
-    isSurgicalReconstVag_2006_01_to_2016_12=as.logical(max(isSurgicalReconstVag_2006_01_to_2016_12,na.rm=T)),
+    isSurgicalReconstVag_2006_01_to_2016_12=max(isSurgicalReconstVag_2006_01_to_2016_12),
     dateFirst_SurgicalReconstVag=min(INDATUM[isSurgicalReconstVag==TRUE],na.rm=T),
     
-    isSurgicalPenisAmp_2006_01_to_2016_12=as.logical(max(isSurgicalPenisAmp_2006_01_to_2016_12,na.rm=T)),
+    isSurgicalPenisAmp_2006_01_to_2016_12=max(isSurgicalPenisAmp_2006_01_to_2016_12),
     dateFirst_SurgicalPenisAmp=min(INDATUM[isSurgicalPenisAmp==TRUE],na.rm=T),
     
-    isSurgicalPenisTestProsth_2006_01_to_2016_12=as.logical(max(isSurgicalPenisTestProsth_2006_01_to_2016_12,na.rm=T)),
+    isSurgicalPenisTestProsth_2006_01_to_2016_12=max(isSurgicalPenisTestProsth_2006_01_to_2016_12),
     dateFirst_SurgicalPenisTestProsth=min(INDATUM[isSurgicalPenisTestProsth==TRUE],na.rm=T),
     
     dateFirst_F00_to_F99=min(INDATUM[isF00_to_F99==T],na.rm=T),
@@ -574,6 +584,9 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   for(i in names(patients)){
     patients[is.infinite(get(i)),(i):=NA]
   }
+  stopifnot(sum(patients$isSurgicalMasectomy_2006_01_to_2016_12==T,na.rm=T)==x1)
+  stopifnot(sum(patients$isSurgicalPenisTestProsth_2006_01_to_2016_12==T,na.rm=T)==x2)
+  
   cat("****** Line 513 /",number_lines,"\n")
   sum(!is.na(patients$date_F64_089_4))
   # days to X diagnosis
@@ -702,9 +715,9 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   
   d[is.na(c_analysisCat_treatments), c_analysisDate_treatments:=NA]
   
-  d[,c_analysisYear_treatments:=YearN(c_analysisDate_treatments)]
+  d[,c_analysisYear_treatments:=lubridate::year(c_analysisDate_treatments)]
   d[,c_analysisAge_treatments:=as.numeric(difftime(c_analysisDate_treatments,dob,units="days"))/365.25]
-  d[,c_analysisAgeCat_treatments:=cut(c_analysisAge_treatments,breaks = c(0,18,30,50,200),include.lowest = T)]
+  d[,c_analysisAgeCat_treatments:=cut(c_analysisAge_treatments,breaks = c(10,18,30,50,200),include.lowest = T)]
   xtabs(~d$c_analysisCat_treatments+d$c_analysisYear_treatments)
   xtabs(~d$c_analysisAgeCat_treatments)
   
@@ -723,9 +736,9 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   
   d[is.na(c_analysisCat_diag), c_analysisDate_diag:=NA]
   
-  d[,c_analysisYear_diag:=YearN(c_analysisDate_diag)]
+  d[,c_analysisYear_diag:=lubridate::year(c_analysisDate_diag)]
   d[,c_analysisAge_diag:=as.numeric(difftime(c_analysisDate_diag,dob,units="days"))/365.25]
-  d[,c_analysisAgeCat_diag:=cut(c_analysisAge_diag,breaks = c(0,18,30,50,200),include.lowest = T)]
+  d[,c_analysisAgeCat_diag:=cut(c_analysisAge_diag,breaks = c(10,18,30,50,200),include.lowest = T)]
   xtabs(~d$c_analysisCat_diag+d$c_analysisYear_diag)
   xtabs(~d$c_analysisAgeCat_diag)
   
@@ -743,9 +756,9 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   
   d[is.na(c_analysisCat_oneplusdiag), c_analysisDate_oneplusdiag:=NA]
   
-  d[,c_analysisYear_oneplusdiag:=YearN(c_analysisDate_oneplusdiag)]
+  d[,c_analysisYear_oneplusdiag:=lubridate::year(c_analysisDate_oneplusdiag)]
   d[,c_analysisAge_oneplusdiag:=as.numeric(difftime(c_analysisDate_oneplusdiag,dob,units="days"))/365.25]
-  d[,c_analysisAgeCat_oneplusdiag:=cut(c_analysisAge_oneplusdiag,breaks = c(0,18,30,50,200),include.lowest = T)]
+  d[,c_analysisAgeCat_oneplusdiag:=cut(c_analysisAge_oneplusdiag,breaks = c(10,18,30,50,200),include.lowest = T)]
   xtabs(~d$c_analysisCat_oneplusdiag+d$c_analysisYear_oneplusdiag)
   xtabs(~d$c_analysisAgeCat_oneplusdiag)
   
@@ -799,9 +812,9 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   
   # end including matched controls
   
-  d[,c_analysisYear_hybrid:=YearN(c_analysisDate_hybrid)]
+  d[,c_analysisYear_hybrid:=lubridate::year(c_analysisDate_hybrid)]
   d[,c_analysisAge_hybrid:=as.numeric(difftime(c_analysisDate_hybrid,dob,units="days"))/365.25]
-  d[,c_analysisAgeCat_hybrid:=cut(c_analysisAge_hybrid,breaks = c(0,18,30,50,200),include.lowest = T)]
+  d[,c_analysisAgeCat_hybrid:=cut(c_analysisAge_hybrid,breaks = c(10,18,30,50,200),include.lowest = T)]
   xtabs(~d$c_analysisCat_hybrid+d$c_analysisYear_hybrid)
   xtabs(~d$c_analysisAgeCat_hybrid)
   
@@ -817,24 +830,24 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   
   
   # dateFirst_F64_089
-  xtabs(~d$numF64_089_2006_01_to_2014_12,addNA=T)
-  d[,c_analysisCat_F64_089_ge10:="00 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==1,c_analysisCat_F64_089_ge10:="01 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==2,c_analysisCat_F64_089_ge10:="02 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==3,c_analysisCat_F64_089_ge10:="03 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==4,c_analysisCat_F64_089_ge10:="04 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==5,c_analysisCat_F64_089_ge10:="05 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==6,c_analysisCat_F64_089_ge10:="06 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==7,c_analysisCat_F64_089_ge10:="07 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==8,c_analysisCat_F64_089_ge10:="08 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==9,c_analysisCat_F64_089_ge10:="09 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12>=10,c_analysisCat_F64_089_ge10:="10+ F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  xtabs(~d$numF64_089_2006_01_to_2016_12,addNA=T)
+  d[,c_analysisCat_F64_089_ge10:="00 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==1,c_analysisCat_F64_089_ge10:="01 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==2,c_analysisCat_F64_089_ge10:="02 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==3,c_analysisCat_F64_089_ge10:="03 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==4,c_analysisCat_F64_089_ge10:="04 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==5,c_analysisCat_F64_089_ge10:="05 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==6,c_analysisCat_F64_089_ge10:="06 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==7,c_analysisCat_F64_089_ge10:="07 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==8,c_analysisCat_F64_089_ge10:="08 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==9,c_analysisCat_F64_089_ge10:="09 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12>=10,c_analysisCat_F64_089_ge10:="10+ F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
   
-  d[,c_analysisCat_F64_089_ge4:="0 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==1,c_analysisCat_F64_089_ge4:="1 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==2,c_analysisCat_F64_089_ge4:="2 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12==3,c_analysisCat_F64_089_ge4:="3 F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
-  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2014_12>=4,c_analysisCat_F64_089_ge4:="4+ F64.0/8/9 diagnosis [2006-01-01, 2014-12-31]"]
+  d[,c_analysisCat_F64_089_ge4:="0 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==1,c_analysisCat_F64_089_ge4:="1 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==2,c_analysisCat_F64_089_ge4:="2 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==3,c_analysisCat_F64_089_ge4:="3 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12>=4,c_analysisCat_F64_089_ge4:="4+ F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
   
   xtabs(~d$c_analysisCat_F64_089_ge10,addNA=T)
   xtabs(~d$c_analysisCat_F64_089_ge4,addNA=T)

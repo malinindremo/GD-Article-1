@@ -58,7 +58,7 @@ saveRDS(d, file=fs::path(org::PROJ$DATA_RAW,"clean","dz.RDS"))
 saveRDS(d, file=fs::path(org::PROJ$DATA_RAW,"natasa","dz.RDS"))
 haven::write_sav(d, fs::path(org::PROJ$DATA_RAW, "natasa", "dz.sav"))
 
-d <- readRDS(file=fs::path(org::PROJ$DATA_RAW,"natasa","dz.RDS"))
+d <- readRDS(file=fs::path(org::PROJ$DATA_RAW,"clean","dz.RDS"))
 
 # numbers
 sink(fs::path(org::PROJ$SHARED_TODAY,"numbers.txt"))
@@ -72,7 +72,7 @@ print("excluded 100 due to ICD8/9")
 print("excluded 22 due to legal sex change before F64/0/8/9 diag")
 print("excluded 166 due to Hormones/surgery before F64.0/8/9 diag")
 print("left with 4090 people")
-print("looking at validation dataset [2006-2014]")
+print("looking at validation dataset - first diagnosis [2006-2014]")
 print(nrow(d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & excluded=="No"]))
 print("looking at trend dataset [2001-2015]")
 print(nrow(d[dateFirst_F64_089 >= "2001-01-01" & dateFirst_F64_089 <= "2015-12-31" & excluded=="No"]))

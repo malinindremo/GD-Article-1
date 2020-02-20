@@ -19,7 +19,7 @@ sexChange[,dateSexChange:=as.Date(sprintf(
   stringr::str_sub(konsbyte_datum,5,6),
   stringr::str_sub(konsbyte_datum,7,8)
 ))]
-sexChange[,yearSexChange:=YearN(dateSexChange)]
+sexChange[,yearSexChange:=lubridate::year(dateSexChange)]
 sexChange[,konsbyte_datum:=NULL]
 
 lopnrs <- sexChange$LopNr

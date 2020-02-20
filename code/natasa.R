@@ -1,6 +1,7 @@
 natasa <- function(d){
   dn <- d[,
           c(
+            "LopNr",
             "dob",
             
             "isBornMale",

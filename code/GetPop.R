@@ -4,7 +4,7 @@ GetPop <- function(){
   setnames(pop,c("year","age","sex","pop"))
   pop[,year:=as.numeric(year)]
   pop[,age:=stringr::str_extract(age,"[0-9]+")]
-  pop[,ageCat:=cut(as.numeric(age),breaks = c(0,18,30,50,200),include.lowest = T)]
+  pop[,ageCat:=cut(as.numeric(age),breaks = c(10,18,30,50,200),include.lowest = T)]
   pop[,ageCat:=as.character(ageCat)]
   pop[,isBornMale:=sex=="men"]
   pop[,bornSex:=ifelse(isBornMale,"Assigned male","Assigned female")]

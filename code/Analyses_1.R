@@ -159,7 +159,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
                            by.x=c("analysisYear_z","bornSex","analysisAgeCat_z"),
                            by.y=c("year","bornSex","ageCat"))
   agg_oneplusdiag[,analysisAgeCat_z:=factor(analysisAgeCat_z,levels=c(
-    "[0,18]",
+    "[10,18]",
     "(18,30]",
     "(30,50]",
     "(50,200]"
@@ -183,7 +183,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
                by.x=c("analysisYear_z","bornSex","analysisAgeCat_z"),
                by.y=c("year","bornSex","ageCat"))
   agg[,analysisAgeCat_z:=factor(analysisAgeCat_z,levels=c(
-    "[0,18]",
+    "[10,18]",
     "(18,30]",
     "(30,50]",
     "(50,200]"
@@ -231,15 +231,15 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   
   fit0 <- glm(
     N~analysisYear_z+bornSex+offset(log(pop)),
-    data=agg[analysisAgeCat_z=="[0,18]"],
+    data=agg[analysisAgeCat_z=="[10,18]"],
     family="poisson"
   )
   fit1 <- glm(
     N~analysisYear_z*bornSex+offset(log(pop)),
-    data=agg[analysisAgeCat_z=="[0,18]"],
+    data=agg[analysisAgeCat_z=="[10,18]"],
     family="poisson"
   )
-  p[["Within [0,18], testing time*assigned sex"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  p[["Within [10,18], testing time*assigned sex"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
   
   fit0 <- glm(
     N~analysisYear_z+bornSex+offset(log(pop)),
@@ -281,29 +281,29 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   
   fit0 <- glm(
     N~offset(log(pop)),
-    data=agg[analysisAgeCat_z=="[0,18]" & bornSex=="Assigned male"],
+    data=agg[analysisAgeCat_z=="[10,18]" & bornSex=="Assigned male"],
     family="poisson"
   )
   fit1 <- glm(
     N~analysisYear_z+offset(log(pop)),
-    data=agg[analysisAgeCat_z=="[0,18]" & bornSex=="Assigned male"],
+    data=agg[analysisAgeCat_z=="[10,18]" & bornSex=="Assigned male"],
     family="poisson"
   )
-  p[["Within [0,18] & assigned male, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
-  est[["Within [0,18] & assigned male, testing time"]] <- extract_poisson(fit1)
+  p[["Within [10,18] & assigned male, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  est[["Within [10,18] & assigned male, testing time"]] <- extract_poisson(fit1)
   
   fit0 <- glm(
     N~offset(log(pop)),
-    data=agg[analysisAgeCat_z=="[0,18]" & bornSex=="Assigned female"],
+    data=agg[analysisAgeCat_z=="[10,18]" & bornSex=="Assigned female"],
     family="poisson"
   )
   fit1 <- glm(
     N~analysisYear_z+offset(log(pop)),
-    data=agg[analysisAgeCat_z=="[0,18]" & bornSex=="Assigned female"],
+    data=agg[analysisAgeCat_z=="[10,18]" & bornSex=="Assigned female"],
     family="poisson"
   )
-  p[["Within [0,18] & assigned female, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
-  est[["Within [0,18] & assigned female, testing time"]] <- extract_poisson(fit1)
+  p[["Within [10,18] & assigned female, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  est[["Within [10,18] & assigned female, testing time"]] <- extract_poisson(fit1)
   
   #####
   
@@ -413,7 +413,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q
   SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_age_incidence_OVERLAYWITH1PLUSDIAG.png"))
   
-  q <- ggplot(agg[analysisAgeCat_z=="[0,18]"],aes(x=analysisYear_z,y=N))
+  q <- ggplot(agg[analysisAgeCat_z=="[10,18]"],aes(x=analysisYear_z,y=N))
   q <- q + geom_line()
   q <- q + geom_point()
   q <- q + facet_grid(.~bornSex)
@@ -426,7 +426,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q
   SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_0-18.png"))
   
-  q <- ggplot(agg[analysisAgeCat_z=="[0,18]"],aes(x=analysisYear_z,y=N/pop*10000))
+  q <- ggplot(agg[analysisAgeCat_z=="[10,18]"],aes(x=analysisYear_z,y=N/pop*10000))
   q <- q + geom_line()
   q <- q + geom_point()
   q <- q + facet_grid(.~bornSex)
