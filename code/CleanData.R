@@ -831,7 +831,8 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   
   # dateFirst_F64_089
   xtabs(~d$numF64_089_2006_01_to_2016_12,addNA=T)
-  d[,c_analysisCat_F64_089_ge10:="00 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[,c_analysisCat_F64_089_ge10:=".xx other"]
+  d[numF64_089_2006_01_to_2016_12==0,c_analysisCat_F64_089_ge10:="00 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
   d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==1,c_analysisCat_F64_089_ge10:="01 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
   d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==2,c_analysisCat_F64_089_ge10:="02 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
   d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==3,c_analysisCat_F64_089_ge10:="03 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
@@ -842,12 +843,17 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==8,c_analysisCat_F64_089_ge10:="08 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
   d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==9,c_analysisCat_F64_089_ge10:="09 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
   d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12>=10,c_analysisCat_F64_089_ge10:="10+ F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2015-01-01",c_analysisCat_F64_089_ge10:=".xx F64.0/8/9 diagnosis first between 2015-2016"]
+  d[dateFirst_F64_089 <= "2005-12-31",c_analysisCat_F64_089_ge10:=".xx F64.0/8/9 diagnosis first before 2006"]
   
-  d[,c_analysisCat_F64_089_ge4:="0 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[,c_analysisCat_F64_089_ge4:=".xx other"]
+  d[numF64_089_2006_01_to_2016_12==0,c_analysisCat_F64_089_ge4:="00 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
   d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==1,c_analysisCat_F64_089_ge4:="1 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
   d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==2,c_analysisCat_F64_089_ge4:="2 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
   d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12==3,c_analysisCat_F64_089_ge4:="3 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
   d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & numF64_089_2006_01_to_2016_12>=4,c_analysisCat_F64_089_ge4:="4+ F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014"]
+  d[dateFirst_F64_089 >= "2015-01-01",c_analysisCat_F64_089_ge4:=".xx F64.0/8/9 diagnosis first between 2015-2016"]
+  d[dateFirst_F64_089 <= "2005-12-31",c_analysisCat_F64_089_ge4:=".xx F64.0/8/9 diagnosis first before 2006"]
   
   xtabs(~d$c_analysisCat_F64_089_ge10,addNA=T)
   xtabs(~d$c_analysisCat_F64_089_ge4,addNA=T)

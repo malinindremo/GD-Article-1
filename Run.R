@@ -60,6 +60,20 @@ haven::write_sav(d, fs::path(org::PROJ$DATA_RAW, "natasa", "dz.sav"))
 
 d <- readRDS(file=fs::path(org::PROJ$DATA_RAW,"clean","dz.RDS"))
 
+d[
+  numF64_089_2006_01_to_2016_12==0 & 
+    excluded=="No" & 
+    bornSex=="Assigned female" &
+    c_isSurgicalPenisTestProsth_2006_01_to_2016_12==T
+  ]
+
+d[
+  c_analysisCat_F64_089_ge4=="0 F64.0/8/9 diagnosis [2006-01-01, 2016-12-31], first between 2006-2014" & 
+    excluded=="No" & 
+    bornSex=="Assigned female" &
+    c_isSurgicalPenisTestProsth_2006_01_to_2016_12==T
+  ]$numF64_089_2006_01_to_2016_12
+
 # numbers
 sink(fs::path(org::PROJ$SHARED_TODAY,"numbers.txt"))
 print("numbers of people with an F64_089 diagnosis")
