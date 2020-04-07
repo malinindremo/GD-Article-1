@@ -1,5 +1,5 @@
 GetPop <- function(){
-  pop <- data.table(readxl::read_excel(fs::path(org::PROJ$HOME,"structural_data","pop.xlsx"),skip=0))
+  pop <- data.table(readxl::read_excel(fs::path(org::project$home,"structural_data","pop.xlsx"),skip=0))
   pop <- melt.data.table(pop,id.vars=c("year","age"))
   setnames(pop,c("year","age","sex","pop"))
   pop[,year:=as.numeric(year)]

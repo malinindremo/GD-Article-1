@@ -3,21 +3,25 @@ OverwriteWithEarlist <- function(d,rows,resVarDate,resVarCat,valVarDate,valCat){
   d[rows,(resVarDate):=get(valVarDate)]
 }
 
+get_diagnoses <- function(){
+  ov <- data.table(haven::read_sas(fs::path(org::project$data_raw,"Sos","ov.sas7bdat")))
+  sv <- data.table(haven::read_sas(fs::path(org::project$data_raw,"Sos","sv.sas7bdat")))
+  # diagnoses and surgeries
+  ov[,type:="outpatient"]
+  sv[,type:="inpatient"]
+  patients <- rbind(ov,sv,fill=T)
+  setorder(patients,LopNr,INDATUM)
+  return(patients)
+}
+
+
 CleanDataPrevalenceGD <- function(){
-  
-  ov <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","ov.sas7bdat")))
-  sv <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","sv.sas7bdat")))
-  sex <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","kon.sas7bdat")))
+  patients <- get_diagnoses()
+  sex <- data.table(haven::read_sas(fs::path(org::project$data_raw,"SCB","kon.sas7bdat")))
   
   sex[,isBornMale:=kon==1]
   sex[,bornSex:=ifelse(isBornMale,"Assigned male","Assigned female")]
   sex[,kon:=NULL]
-  
-  ov[,type:="outpatient"]
-  sv[,type:="inpatient"]
-  patients <- rbind(ov,sv,fill=T)
-  
-  setorder(patients,LopNr,INDATUM)
   
   nrow(patients)
   patients <- merge(patients,sex,by="LopNr", all.x=T)
@@ -47,26 +51,25 @@ CleanDataPrevalenceGD <- function(){
   
   return(patients)
 }
-  
+
+
 
 CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   number_lines <- 900
   cat("****** Line 9 /",number_lines,"\n")
-  links_assigned <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","fp_lev_fall_och_kontroller_1.sas7bdat")))
-  links_opposite <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","fp_lev_fall_och_kontroller_2.sas7bdat")))
-  ov <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","ov.sas7bdat")))
-  sv <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","sv.sas7bdat")))
-  rx <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","ut_r_lmed_10218_2017.sas7bdat")))
-  demografi <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","demografi.sas7bdat")))
-  sex <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","kon.sas7bdat")))
+  links_assigned <- data.table(haven::read_sas(fs::path(org::project$data_raw,"SCB","fp_lev_fall_och_kontroller_1.sas7bdat")))
+  links_opposite <- data.table(haven::read_sas(fs::path(org::project$data_raw,"SCB","fp_lev_fall_och_kontroller_2.sas7bdat")))
+  rx <- data.table(haven::read_sas(fs::path(org::project$data_raw,"Sos","ut_r_lmed_10218_2017.sas7bdat")))
+  demografi <- data.table(haven::read_sas(fs::path(org::project$data_raw,"SCB","demografi.sas7bdat")))
+  sex <- data.table(haven::read_sas(fs::path(org::project$data_raw,"SCB","kon.sas7bdat")))
  
-  #birth_reg <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"Sos","UT_MFR_BARN_10218_2017.sas7bdat"),encoding="UTF-8"))
-  #birth_reg <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","fp_lev_fall_och_kontroller_1.sas7bdat"),encoding="UTF-8"))
+  #birth_reg <- data.table(haven::read_sas(fs::path(org::project$data_raw,"Sos","UT_MFR_BARN_10218_2017.sas7bdat"),encoding="UTF-8"))
+  #birth_reg <- data.table(haven::read_sas(fs::path(org::project$data_raw,"SCB","fp_lev_fall_och_kontroller_1.sas7bdat"),encoding="UTF-8"))
   
   cat("****** Line 21 /",number_lines,"\n")
   
   ## sex change 
-  sexChange <- data.table(haven::read_sas(fs::path(org::PROJ$DATA_RAW,"SCB","konsbyten.sas7bdat")))
+  sexChange <- data.table(haven::read_sas(fs::path(org::project$data_raw,"SCB","konsbyten.sas7bdat")))
   sexChange[,dateSexChange:=as.Date(sprintf(
     "%s-%s-%s",
     stringr::str_sub(konsbyte_datum,1,4),
@@ -119,6 +122,16 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
     rx[stringr::str_detect(atc,i),isHormonePubBlock:=TRUE]
   }
   
+  rx[,isHormoneTestosterone:=FALSE]
+  for(i in c("^G03B")){
+    rx[stringr::str_detect(atc,i),isHormoneTestosterone:=TRUE]
+  }
+  
+  rx[,isHormoneEstrogen:=FALSE]
+  for(i in c("^G03C")){
+    rx[stringr::str_detect(atc,i),isHormoneEstrogen:=TRUE]
+  }
+  
   # merge in sex
   cat("****** Line 70 /",number_lines,"\n")
   nrow(sex)
@@ -143,7 +156,7 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   # puberty blockers for 19+ year olds are discarded
     rx[isHormonePubBlock==TRUE & age>=19,c_isHormonePubBlock:=FALSE]
   }
-  rx[,age:=NULL]
+  #rx[,age:=NULL]
   
   rx[,isHormone:=isHormoneMTF | isHormoneFTM | isHormonePubBlock]
   rx[,c_isHormone:=c_isHormoneMTF | c_isHormoneFTM | c_isHormonePubBlock]
@@ -168,13 +181,23 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   rx[FDATUM < "2006-01-01",c_isHormone_2006_01_to_2016_12:=FALSE]
   rx[FDATUM > "2016-12-31",c_isHormone_2006_01_to_2016_12:=FALSE]
   
+  rx[,isHormoneTestosterone_2006_01_to_2016_12:=isHormoneTestosterone]
+  rx[FDATUM < "2006-01-01",isHormoneTestosterone_2006_01_to_2016_12:=FALSE]
+  rx[FDATUM > "2016-12-31",isHormoneTestosterone_2006_01_to_2016_12:=FALSE]
+  
+  rx[,isHormoneEstrogen_2006_01_to_2016_12:=isHormoneEstrogen]
+  rx[FDATUM < "2006-01-01",isHormoneEstrogen_2006_01_to_2016_12:=FALSE]
+  rx[FDATUM > "2016-12-31",isHormoneEstrogen_2006_01_to_2016_12:=FALSE]
+  
   cat("****** Line 116 /",number_lines,"\n")
   
   x1 <- length(unique(rx[isHormone==T]$LopNr))
   x2 <- length(unique(rx[c_isHormone_2006_01_to_2016_12==T]$LopNr))
+  x3 <- length(unique(rx[isHormoneEstrogen_2006_01_to_2016_12==T]$LopNr))
   # collapse down to 1 row/person
   rx <- rx[,.(
     isHormone=max(isHormone),
+    ageFirstHormone=min(age[isHormone==TRUE], na.rm=T),
     dateFirstHormone=min(FDATUM[isHormone==TRUE], na.rm=T),
     isHormone_2006_01_to_2016_12=max(isHormone_2006_01_to_2016_12),
     
@@ -183,31 +206,30 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
     isHormonePubBlock_2006_01_to_2016_12=max(isHormonePubBlock_2006_01_to_2016_12),
     
     c_isHormone=max(c_isHormone),
+    c_ageFirstHormone=min(age[c_isHormone==TRUE], na.rm=T),
     c_dateFirstHormone=min(FDATUM[c_isHormone==TRUE], na.rm=T),
     c_dateFirstHormoneFTM=min(FDATUM[c_isHormoneFTM==TRUE], na.rm=T),
     c_dateFirstHormoneMTF=min(FDATUM[c_isHormoneMTF==TRUE], na.rm=T),
     c_dateFirstHormonePubBlock=min(FDATUM[c_isHormonePubBlock==TRUE], na.rm=T),
-    c_isHormone_2006_01_to_2016_12=max(c_isHormone_2006_01_to_2016_12)
+    c_isHormone_2006_01_to_2016_12=max(c_isHormone_2006_01_to_2016_12),
+    isHormoneTestosterone_2006_01_to_2016_12=max(isHormoneTestosterone_2006_01_to_2016_12),
+    isHormoneEstrogen_2006_01_to_2016_12=max(isHormoneEstrogen_2006_01_to_2016_12)
   ),by=.(LopNr)]
   nrow(rx)
   stopifnot(sum(rx$isHormone==T,na.rm=T)==x1)
   stopifnot(sum(rx$c_isHormone_2006_01_to_2016_12==T,na.rm=T)==x2)
+  stopifnot(sum(rx$isHormoneEstrogen_2006_01_to_2016_12==T,na.rm=T)==x3)
   for(i in names(rx)){
     rx[is.infinite(get(i)),(i):=NA]
   }
   
   cat("****** Line 136 /",number_lines,"\n")
-  # diagnoses and surgeries
-  ov[,type:="outpatient"]
-  sv[,type:="inpatient"]
-  patients <- rbind(ov,sv,fill=T)
+  patients <- get_diagnoses()
   
   # removing people who are missing INDATUM
   #nrow(patients)
   #patients <- patients[!is.na(INDATUM)]
   #nrow(patients)
-  
-  setorder(patients,LopNr,INDATUM)
   
   cat("****** Line 149 /",number_lines,"\n")
   # merge with sex
@@ -761,6 +783,16 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   d[,c_analysisAgeCat_oneplusdiag:=cut(c_analysisAge_oneplusdiag,breaks = c(10,18,30,50,200),include.lowest = T)]
   xtabs(~d$c_analysisCat_oneplusdiag+d$c_analysisYear_oneplusdiag)
   xtabs(~d$c_analysisAgeCat_oneplusdiag)
+  
+  d[,c_analysisYearCat_oneplusdiag:=
+      fancycut::fancycut(
+        c_analysisYear_oneplusdiag,
+        `2001-2005` = "[2001,2005]",
+        `2006-2010` = "[2006,2010]",
+        `2011-2015` = "[2011,2015]",
+        na.bucket = NA,
+        out.as.factor = F
+      )]
   
   
   ## HYBRID

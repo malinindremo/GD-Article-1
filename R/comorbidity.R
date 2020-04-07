@@ -3,7 +3,7 @@ comorbidity <- function(dz,folder="comorbidity"){
   
   # by sex age
   res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid, c_analysisSex_hybrid, c_analysisAgeCat_hybrid), .SDcols = c("N",co)]
-  openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,folder,"by_sex_age.xlsx"))
+  openxlsx::write.xlsx(res, fs::path(org::project$results_today,folder,"by_sex_age.xlsx"))
   
   long <- melt.data.table(res,id.vars=c("c_analysisCat_hybrid","c_analysisSex_hybrid","c_analysisAgeCat_hybrid","N"))
   long[,cat:=glue::glue("{c_analysisSex_hybrid} {c_analysisAgeCat_hybrid}",
@@ -20,11 +20,11 @@ comorbidity <- function(dz,folder="comorbidity"){
   q <- q + scale_y_continuous("Percentage",labels=scales::percent,limits=c(0,max(long$prop)*1.1))
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"by_sex_age.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"by_sex_age.png"))
   
   # by sex year
   res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid, c_analysisSex_hybrid, c_analysisYear_hybrid), .SDcols = c("N",co)]
-  openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,folder,"by_sex_year.xlsx"))
+  openxlsx::write.xlsx(res, fs::path(org::project$results_today,folder,"by_sex_year.xlsx"))
   
   
   for(cx in co){
@@ -91,12 +91,12 @@ comorbidity <- function(dz,folder="comorbidity"){
     if(includes_controls) q <- q + expand_limits(y=c(0,1.15))
     if(includes_controls) q <- q + labs(caption=caption)
     q
-    SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,glue::glue("by_sex_year_{cx}.png")))
+    SaveA4(q, fs::path(org::project$results_today,folder,glue::glue("by_sex_year_{cx}.png")))
   }
   
   # by age sex year
   res <- dz[, lapply(.SD, sum), keyby = .(c_analysisCat_hybrid, c_analysisSex_hybrid, c_analysisYearCat_hybrid, c_analysisAgeCat_hybrid), .SDcols = c("N",co)]
-  openxlsx::write.xlsx(res, fs::path(org::PROJ$SHARED_TODAY,folder,"by_age_sex_year.xlsx"))
+  openxlsx::write.xlsx(res, fs::path(org::project$results_today,folder,"by_age_sex_year.xlsx"))
   
   #restricted_co <- c("comorbid_F84","comorbid_F90")
   for(cx in co){
@@ -120,6 +120,6 @@ comorbidity <- function(dz,folder="comorbidity"){
     q <- q + expand_limits(y=c(0,1.1))
     if(nrow(to_plot[c_analysisCat_hybrid!="Hybrid"])>0) q <- q + expand_limits(y=c(0,1.25))
     q
-    SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,glue::glue("by_age_sex_year_{cx}.png")))
+    SaveA4(q, fs::path(org::project$results_today,folder,glue::glue("by_age_sex_year_{cx}.png")))
   }
 }

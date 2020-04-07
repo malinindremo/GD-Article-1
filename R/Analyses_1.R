@@ -11,12 +11,7 @@ extract_poisson <- function(fit, var="analysisYear_z"){
 }
 
 Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
-  legal_sexchange_applications <- readxl::read_excel(fs::path(org::PROJ$HOME,"structural_data","legal_sex_change.xlsx"))
-  setDT(legal_sexchange_applications)
-  legal_sexchange_applications[pop[ageCat=="All" & bornSex=="All"],on="year",pop:=pop]
-  setnames(legal_sexchange_applications, c("analysisYear_z","N","pop"))
-  legal_sexchange_applications[,definition:="Legal change"]
-  legal_sexchange_applications[,bornSex:="Total"]
+  legal_sexchange_applications <- get_legal_sex_change()
   
   agg_oneplusdiag <- d_oneplusdiag[,
                                    .(
@@ -50,7 +45,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   )
   xlsx::write.xlsx(
     tosave,
-    fs::path(org::PROJ$SHARED_TODAY,folder,"raw_numbers.xlsx")
+    fs::path(org::project$results_today,folder,"raw_numbers.xlsx")
   )
   
   # plot 1
@@ -100,7 +95,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   agg_together_total[,bornSex:="Total"]
   agg_together <- rbind(agg_together, agg_together_total)
   agg_together <- rbind(agg_together,legal_sexchange_applications,fill=T)
-  openxlsx::write.xlsx(agg_together, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex.xlsx"))
+  openxlsx::write.xlsx(agg_together, fs::path(org::project$results_today,folder,"per_year_by_born_sex.xlsx"))
   
   q <- ggplot(agg,aes(x=analysisYear_z,y=N,colour=bornSex))
   q <- q + geom_line()
@@ -112,7 +107,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex.png"))
   
   q <- ggplot(agg,aes(x=analysisYear_z,y=N/pop*10000,colour=bornSex))
   q <- q + geom_line()
@@ -124,7 +119,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_incidence.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex_incidence.png"))
   
   q <- ggplot(agg_together,aes(x=analysisYear_z,y=N/pop*10000,colour=definition))
   q <- q + geom_line()
@@ -137,7 +132,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + facet_wrap(~bornSex)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_incidence_OVERLAYWITH1PLUSDIAG.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex_incidence_OVERLAYWITH1PLUSDIAG.png"))
   
   # plot 2
   # number of diagnoses
@@ -200,7 +195,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   )]
   
   agg_together <- rbind(agg_oneplusdiag, agg)
-  openxlsx::write.xlsx(agg_together, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_age.xlsx"))
+  openxlsx::write.xlsx(agg_together, fs::path(org::project$results_today,folder,"per_year_by_born_sex_age.xlsx"))
   
   ## poisson regressions
   p <- list()
@@ -384,7 +379,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q <- q + labs(caption=caption)
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_age.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex_age.png"))
   
   q <- ggplot(agg,aes(x=analysisYear_z,y=N/pop*10000,colour=analysisAgeCat_z))
   q <- q + geom_line()
@@ -398,7 +393,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + labs(caption=caption)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_age_incidence.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex_age_incidence.png"))
   
   q <- ggplot(agg_together,aes(x=analysisYear_z,y=N/pop*10000,colour=definition))
   q <- q + geom_line()
@@ -411,7 +406,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_age_incidence_OVERLAYWITH1PLUSDIAG.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex_age_incidence_OVERLAYWITH1PLUSDIAG.png"))
   
   q <- ggplot(agg[analysisAgeCat_z=="[10,18]"],aes(x=analysisYear_z,y=N))
   q <- q + geom_line()
@@ -424,7 +419,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_0-18.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex_0-18.png"))
   
   q <- ggplot(agg[analysisAgeCat_z=="[10,18]"],aes(x=analysisYear_z,y=N/pop*10000))
   q <- q + geom_line()
@@ -437,7 +432,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_0-18_incidence.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex_0-18_incidence.png"))
   
   # plot 3
   # number of sex changes
@@ -456,7 +451,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   agg <- merge(agg,pop[ageCat=="All"],
                by.x=c("yearSexChange","bornSex"),
                by.y=c("year","bornSex"))
-  openxlsx::write.xlsx(agg, fs::path(org::PROJ$SHARED_TODAY,folder,"sex_change_per_year_by_born_sex.xlsx"))
+  openxlsx::write.xlsx(agg, fs::path(org::project$results_today,folder,"sex_change_per_year_by_born_sex.xlsx"))
   
   q <- ggplot(agg,aes(x=yearSexChange,y=N,colour=bornSex))
   q <- q + geom_line()
@@ -468,7 +463,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"sex_change_per_year_by_born_sex.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"sex_change_per_year_by_born_sex.png"))
   
   q <- ggplot(agg,aes(x=yearSexChange,y=N/pop*10000,colour=bornSex))
   q <- q + geom_line()
@@ -480,14 +475,14 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"sex_change_per_year_by_born_sex_incidence.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"sex_change_per_year_by_born_sex_incidence.png"))
   
   
 }
 
 
 
-analyses_together <- function(dz, d_oneplusdiag, prev, pop, folder){
+analyses_together_1 <- function(dz, d_oneplusdiag, prev, pop, folder){
   agg <- dz[,
             .(
               `Diagnoses (4+)`=sum(!is.na(c_analysisCat_diag)),
@@ -501,21 +496,21 @@ analyses_together <- function(dz, d_oneplusdiag, prev, pop, folder){
                ,allow.cartesian= TRUE]
   
   agg_1p <- d_oneplusdiag[,
-            .(
-              `Diagnoses (1+)`=sum(!is.na(c_analysisAge_oneplusdiag))
-            ),keyby=.(
-              bornSex,
-              c_analysisYear_oneplusdiag
-            )][CJ(unique(d_oneplusdiag$bornSex),
-                  unique(d_oneplusdiag$c_analysisYear_oneplusdiag))
-               ,allow.cartesian= TRUE]
+                          .(
+                            `Diagnoses (1+)`=sum(!is.na(c_analysisAge_oneplusdiag))
+                          ),keyby=.(
+                            bornSex,
+                            c_analysisYear_oneplusdiag
+                          )][CJ(unique(d_oneplusdiag$bornSex),
+                                unique(d_oneplusdiag$c_analysisYear_oneplusdiag))
+                             ,allow.cartesian= TRUE]
   
   agg[agg_1p,on=c("bornSex==bornSex","c_analysisYear_hybrid==c_analysisYear_oneplusdiag"),`Diagnoses (1+)`:=`Diagnoses (1+)`]
   
   agg[prev,on=c("bornSex==bornSex","c_analysisYear_hybrid==year"),`Prevalence (1+ diag)`:=N]
   
   xlsx::write.xlsx(agg,
-                   fs::path(org::PROJ$SHARED_TODAY,folder,"raw_numbers.xlsx"))
+                   fs::path(org::project$results_today,folder,"raw_numbers.xlsx"))
   
   long <- melt.data.table(agg, id.vars=c("bornSex","c_analysisYear_hybrid"))
   
@@ -531,7 +526,7 @@ analyses_together <- function(dz, d_oneplusdiag, prev, pop, folder){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex.png"))
   
   q <- ggplot(long,aes(x=c_analysisYear_hybrid,y=value,colour=variable))
   q <- q + geom_line()
@@ -545,10 +540,224 @@ analyses_together <- function(dz, d_oneplusdiag, prev, pop, folder){
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::PROJ$SHARED_TODAY,folder,"per_year_by_born_sex_with_prevalence.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex_with_prevalence.png"))
   
   
 }
+
+
+analyses_together_2 <- function(d, pop, folder){
+  agg <- d[!is.na(c_analysisCat_oneplusdiag),
+            .(
+              `Diagnoses (1+)`=sum(!is.na(c_analysisCat_oneplusdiag)),
+              `Diagnoses (4+)`=sum(!is.na(c_analysisCat_diag)),
+              `Diagnosis (1+) + treatment`=sum(!is.na(c_analysisCat_treatments))
+            ),keyby=.(
+              bornSex,
+              c_analysisYear_oneplusdiag
+            )][CJ(unique(d$bornSex),
+                  unique(d$c_analysisYear_oneplusdiag))
+               ,allow.cartesian= TRUE]
+  agg <- agg[!is.na(c_analysisYear_oneplusdiag)]
+  aggx <- copy(agg)
+  aggx[,bornSex:="All"]
+  aggx <- aggx[,lapply(.SD,sum),keyby=.(bornSex,c_analysisYear_oneplusdiag)]
+  
+  agg <- rbind(agg,aggx)
+  
+  sexchange <- get_legal_sex_change()
+  sexchange[,bornSex:="All"]
+  setnames(sexchange,"analysisYear_z","c_analysisYear_oneplusdiag")
+  agg[sexchange,on=c("bornSex","c_analysisYear_oneplusdiag"),`Legal sex change`:=N]
+  
+  xlsx::write.xlsx(agg,
+                   fs::path(org::project$results_today,folder,"raw_numbers_by_sex.xlsx"))
+  
+  long <- melt.data.table(agg, id.vars=c("bornSex","c_analysisYear_oneplusdiag"))
+  long[pop[ageCat=="All"],on=c("c_analysisYear_oneplusdiag==year","bornSex"),pop:=pop]
+  xlsx::write.xlsx(
+    long,
+    fs::path(org::project$results_today,folder,"raw_numbers_by_sex_long.xlsx")
+  )
+  
+  q <- ggplot(long,aes(x=c_analysisYear_oneplusdiag,y=value,colour=variable))
+  q <- q + geom_line()
+  q <- q + geom_point()
+  q <- q + scale_color_brewer("",palette="Set1")
+  q <- q + scale_x_continuous("Year",
+                              breaks=seq(2001,2020,2))
+  q <- q + scale_y_continuous("Number of people")
+  q <- q + expand_limits(y=0)
+  q <- q + facet_wrap(~bornSex)
+  q <- q + theme_gray(16)
+  q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+  q
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_sex.png"))
+  
+  q <- ggplot(long,aes(x=c_analysisYear_oneplusdiag,y=value/pop*10000,colour=variable))
+  q <- q + geom_line()
+  q <- q + geom_point()
+  q <- q + scale_color_brewer("",palette="Set1")
+  q <- q + scale_x_continuous("Year",
+                              breaks=seq(2001,2020,2))
+  q <- q + scale_y_continuous("Number of people/10,000 population")
+  q <- q + expand_limits(y=0)
+  q <- q + facet_wrap(~bornSex)
+  q <- q + theme_gray(16)
+  q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+  q
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_sex_incidence.png"))
+  
+  agg <- d[!is.na(c_analysisCat_oneplusdiag),
+           .(
+             `Diagnoses (1+)`=sum(!is.na(c_analysisCat_oneplusdiag)),
+             `Diagnoses (4+)`=sum(!is.na(c_analysisCat_diag)),
+             `Diagnosis (1+) + treatment`=sum(!is.na(c_analysisCat_treatments))
+           ),keyby=.(
+             bornSex,
+             c_analysisAgeCat_oneplusdiag,
+             c_analysisYear_oneplusdiag
+           )][CJ(unique(d$bornSex),
+                 unique(d$c_analysisAgeCat_oneplusdiag),
+                 unique(d$c_analysisYear_oneplusdiag))
+              ,allow.cartesian= TRUE]
+  agg <- agg[!is.na(c_analysisYear_oneplusdiag) & !is.na(c_analysisAgeCat_oneplusdiag)]
+  for(i in names(agg)){
+    agg[is.na(get(i)),(i):=0]
+  }
+  
+  xlsx::write.xlsx(agg,
+                   fs::path(org::project$results_today,folder,"raw_numbers_by_sex_age.xlsx"))
+  
+  long <- melt.data.table(agg, id.vars=c("bornSex","c_analysisYear_oneplusdiag","c_analysisAgeCat_oneplusdiag"))
+  long[pop,on=c("c_analysisYear_oneplusdiag==year","bornSex","c_analysisAgeCat_oneplusdiag==ageCat"),pop:=pop]
+  xlsx::write.xlsx(
+    long,
+    fs::path(org::project$results_today,folder,"raw_numbers_by_sex_age_long.xlsx")
+  )
+  
+  q <- ggplot(long,aes(x=c_analysisYear_oneplusdiag,y=value,colour=variable))
+  q <- q + geom_line()
+  q <- q + geom_point()
+  q <- q + scale_color_brewer("",palette="Set1")
+  q <- q + scale_x_continuous("Year",
+                              breaks=seq(2001,2020,2))
+  q <- q + scale_y_continuous("Number of people")
+  q <- q + expand_limits(y=0)
+  q <- q + facet_grid(c_analysisAgeCat_oneplusdiag~bornSex)
+  q <- q + theme_gray(16)
+  q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+  q <- q + theme(legend.position="bottom")
+  q
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_sex_age.png"),landscape=F)
+  
+  q <- ggplot(long,aes(x=c_analysisYear_oneplusdiag,y=value/pop*10000,colour=variable))
+  q <- q + geom_line()
+  q <- q + geom_point()
+  q <- q + scale_color_brewer("",palette="Set1")
+  q <- q + scale_x_continuous("Year",
+                              breaks=seq(2001,2020,2))
+  q <- q + scale_y_continuous("Number of people/10,000 population")
+  q <- q + expand_limits(y=0)
+  q <- q + facet_grid(c_analysisAgeCat_oneplusdiag~bornSex)
+  q <- q + theme_gray(16)
+  q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+  q <- q + theme(legend.position="bottom")
+  q
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_sex_age_incidence.png"),landscape=F)
+  
+  # 3 time periods, compare
+  
+  agg <- d[!is.na(c_analysisYearCat_oneplusdiag),
+           .(
+             `Diagnoses (1+)`=sum(!is.na(c_analysisCat_oneplusdiag)),
+             `Diagnoses (4+)`=sum(!is.na(c_analysisCat_diag)),
+             `Diagnoses (1+) + treatment`=sum(!is.na(c_analysisCat_treatments))
+           ),keyby=.(
+             bornSex,
+             c_analysisAgeCat_oneplusdiag,
+             c_analysisYearCat_oneplusdiag
+           )][CJ(unique(d$bornSex),
+                 unique(d$c_analysisAgeCat_oneplusdiag),
+                 unique(d$c_analysisYearCat_oneplusdiag))
+              ,allow.cartesian= TRUE]
+  agg <- agg[!is.na(c_analysisYearCat_oneplusdiag) & !is.na(c_analysisAgeCat_oneplusdiag)]
+  for(i in names(agg)){
+    agg[is.na(get(i)),(i):=0]
+  }
+  agg[,`Diagnoses (1+) (change from last period)`:= 
+        paste0(round(100*`Diagnoses (1+)`/shift(`Diagnoses (1+)`)),"%"),
+      by=.(bornSex,c_analysisAgeCat_oneplusdiag)]
+  
+  agg[,`Diagnoses (4+) (change from last period)`:= 
+        paste0(round(100*`Diagnoses (4+)`/shift(`Diagnoses (4+)`)),"%"),
+      by=.(bornSex,c_analysisAgeCat_oneplusdiag)]
+  
+  agg[,`Diagnoses (1+) + treatment (change from last period)`:= 
+        paste0(round(100*`Diagnoses (1+) + treatment`/shift(`Diagnoses (1+) + treatment`)),"%"),
+      by=.(bornSex,c_analysisAgeCat_oneplusdiag)]
+  for(i in names(agg)){
+    agg[get(i)=="NA%",(i):=""]
+  }
+  
+  xlsx::write.xlsx(
+    agg,
+    fs::path(org::project$results_today,folder,"comparison_of_time_periods_richard.xlsx")
+  )
+  
+  # 3 time periods, compare
+  
+  agg <- d[!is.na(c_analysisYearCat_oneplusdiag),
+           .(
+             `Diagnoses (1+)`=sum(!is.na(c_analysisCat_oneplusdiag)),
+             `Diagnoses (4+)`=sum(!is.na(c_analysisCat_diag)),
+             `Diagnoses (1+) + treatment`=sum(!is.na(c_analysisCat_treatments))
+           ),keyby=.(
+             bornSex,
+             c_analysisAgeCat_oneplusdiag,
+             c_analysisYearCat_oneplusdiag
+           )][CJ(unique(d$bornSex),
+                 unique(d$c_analysisAgeCat_oneplusdiag),
+                 unique(d$c_analysisYearCat_oneplusdiag))
+              ,allow.cartesian= TRUE]
+  agg <- agg[!is.na(c_analysisYearCat_oneplusdiag) & !is.na(c_analysisAgeCat_oneplusdiag)]
+  for(i in names(agg)){
+    agg[is.na(get(i)),(i):=0]
+  }
+  # 
+  # agg[,`Diagnoses (1+) (change from last period)`:= 
+  #       paste0(round(100*`Diagnoses (1+)`/shift(`Diagnoses (1+)`)),"%"),
+  #     by=.(bornSex,c_analysisAgeCat_oneplusdiag)]
+  # 
+  # agg[,`Diagnoses (4+) (change from last period)`:= 
+  #       paste0(round(100*`Diagnoses (4+)`/shift(`Diagnoses (4+)`)),"%"),
+  #     by=.(bornSex,c_analysisAgeCat_oneplusdiag)]
+  # 
+  # agg[,`Diagnoses (1+) + treatment (change from last period)`:= 
+  #       paste0(round(100*`Diagnoses (1+) + treatment`/shift(`Diagnoses (1+) + treatment`)),"%"),
+  #     by=.(bornSex,c_analysisAgeCat_oneplusdiag)]
+  
+  agg[`Diagnoses (4+)`!=0,`% difference Diagnosis 1+/Diagnosis 4+`:=
+        paste0(round(100*`Diagnoses (1+)`/`Diagnoses (4+)`)-100,"%")
+      ]
+  agg[`Diagnoses (1+) + treatment`!=0,`% difference Diagnosis (1+)/Diagnosis (1+) + treatment`:=
+        paste0(round(100*`Diagnoses (1+)`/`Diagnoses (1+) + treatment`)-100,"%")
+      ]
+  agg[]
+  
+  for(i in names(agg)){
+    agg[is.na(get(i)),(i):=""]
+  }
+  
+  xlsx::write.xlsx(
+    agg,
+    fs::path(org::project$results_today,folder,"comparison_of_time_periods_malin.xlsx")
+  )
+}
+
+
+
+
 
 
 

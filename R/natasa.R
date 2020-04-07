@@ -150,8 +150,8 @@ natasa <- function(d){
     "- use 'c_analysisSex_hybrid' as the sex variable\r\n"
   )
   
-  writeLines(important_info, fs::path(org::PROJ$DATA_RAW, "natasa", "important_info.txt"))
-  writexl::write_xlsx(labs, fs::path(org::PROJ$DATA_RAW, "natasa", "data_descriptions.xlsx"))
-  haven::write_sav(dn, fs::path(org::PROJ$DATA_RAW, "natasa", "data.sav"))
+  writeLines(important_info, fs::path(org::project$data_raw, "natasa", "important_info.txt"))
+  writexl::write_xlsx(labs, fs::path(org::project$data_raw, "natasa", "data_descriptions.xlsx"))
+  haven::write_sav(dn, fs::path(org::project$data_raw, "natasa", "data.sav"))
   
 }

@@ -30,7 +30,7 @@ time_to_diagnosis <- function(d){
   SaveA4(
     q, 
     filename = fs::path(
-      org::PROJ$SHARED_TODAY,
+      org::project$results_today,
       "descriptives",
       "time_to_hormones_surgery_survival.png"
     ))
@@ -75,7 +75,7 @@ time_to_diagnosis <- function(d){
   openxlsx::write.xlsx(
     retval, 
     fs::path(
-      org::PROJ$SHARED_TODAY,
+      org::project$results_today,
       "descriptives",
       "time_to_X.xlsx"
     )
@@ -94,7 +94,7 @@ time_to_diagnosis <- function(d){
   SaveA4(
     q, 
     filename = fs::path(
-      org::PROJ$SHARED_TODAY,
+      org::project$results_today,
       "descriptives",
       "time_to_X.png"
     ))
