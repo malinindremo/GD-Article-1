@@ -709,12 +709,14 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   d[excluded=="No" & is.na(dateFirst_F64_089) & !is.na(dateSexChange),excluded:="Legal sex change (no F64.0/8/9 diag)"]
   d[excluded=="No" & dateSexChange<dateFirst_F64_089,excluded:="Legal sex change before F64.0/8/9 diag"]
   d[excluded=="No" & c_dateFirst_surgery_hormones<dateFirst_F64_089,excluded:="Hormones/surgery before F64.0/8/9 diag"]
+  d[excluded=="No" & as.numeric(difftime(dateFirst_F64_089,dob,units="days"))/365.25<10,excluded:="First F64.0/8/9 diag before 10yo"]
   d[,excluded:=factor(excluded,levels=c(
     "No",
     "ICD8/9",
     "Legal sex change (no F64.0/8/9 diag)",
     "Legal sex change before F64.0/8/9 diag",
-    "Hormones/surgery before F64.0/8/9 diag"
+    "Hormones/surgery before F64.0/8/9 diag",
+    "First F64.0/8/9 diag before 10yo"
   ))]
   xtabs(~d$excluded)
   
@@ -739,7 +741,15 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   
   d[,c_analysisYear_treatments:=lubridate::year(c_analysisDate_treatments)]
   d[,c_analysisAge_treatments:=as.numeric(difftime(c_analysisDate_treatments,dob,units="days"))/365.25]
-  d[,c_analysisAgeCat_treatments:=cut(c_analysisAge_treatments,breaks = c(10,18,30,50,200),include.lowest = T)]
+  d[,c_analysisAgeCat_treatments:=fancycut::fancycut(
+    c_analysisAge_treatments,
+    `10-17`="[10,18)",
+    `18-30`="[18,31)",
+    `31-50`="[31,51)",
+    `51+`="[51,190000)",
+    out.as.factor = F
+  )]
+  #d[,c_analysisAgeCat_treatments:=cut(c_analysisAge_treatments,breaks = c(10,18,30,50,200),include.lowest = T)]
   xtabs(~d$c_analysisCat_treatments+d$c_analysisYear_treatments)
   xtabs(~d$c_analysisAgeCat_treatments)
   
@@ -760,7 +770,15 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   
   d[,c_analysisYear_diag:=lubridate::year(c_analysisDate_diag)]
   d[,c_analysisAge_diag:=as.numeric(difftime(c_analysisDate_diag,dob,units="days"))/365.25]
-  d[,c_analysisAgeCat_diag:=cut(c_analysisAge_diag,breaks = c(10,18,30,50,200),include.lowest = T)]
+  d[,c_analysisAgeCat_diag:=fancycut::fancycut(
+    c_analysisAge_diag,
+    `10-17`="[10,18)",
+    `18-30`="[18,31)",
+    `31-50`="[31,51)",
+    `51+`="[51,190000)",
+    out.as.factor = F
+  )]
+  #d[,c_analysisAgeCat_diag:=cut(c_analysisAge_diag,breaks = c(10,18,30,50,200),include.lowest = T)]
   xtabs(~d$c_analysisCat_diag+d$c_analysisYear_diag)
   xtabs(~d$c_analysisAgeCat_diag)
   
@@ -780,7 +798,19 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   
   d[,c_analysisYear_oneplusdiag:=lubridate::year(c_analysisDate_oneplusdiag)]
   d[,c_analysisAge_oneplusdiag:=as.numeric(difftime(c_analysisDate_oneplusdiag,dob,units="days"))/365.25]
-  d[,c_analysisAgeCat_oneplusdiag:=cut(c_analysisAge_oneplusdiag,breaks = c(10,18,30,50,200),include.lowest = T)]
+  d[,c_analysisAgeCat_oneplusdiag:=fancycut::fancycut(
+    c_analysisAge_oneplusdiag,
+    `10-17`="[10,18)",
+    `18-30`="[18,31)",
+    `31-50`="[31,51)",
+    `51+`="[51,190000)",
+    out.as.factor = F
+  )]
+  # d[,c_analysisAgeCat_oneplusdiag:=cut(
+  #   c_analysisAge_oneplusdiag,
+  #   breaks = c(10,18,30,50,200),
+  #   labels = c("10-18","19-30","31-50","51+"),
+  #   include.lowest = T)]
   xtabs(~d$c_analysisCat_oneplusdiag+d$c_analysisYear_oneplusdiag)
   xtabs(~d$c_analysisAgeCat_oneplusdiag)
   
@@ -846,7 +876,15 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   
   d[,c_analysisYear_hybrid:=lubridate::year(c_analysisDate_hybrid)]
   d[,c_analysisAge_hybrid:=as.numeric(difftime(c_analysisDate_hybrid,dob,units="days"))/365.25]
-  d[,c_analysisAgeCat_hybrid:=cut(c_analysisAge_hybrid,breaks = c(10,18,30,50,200),include.lowest = T)]
+  d[,c_analysisAgeCat_hybrid:=fancycut::fancycut(
+    c_analysisAge_hybrid,
+    `10-17`="[10,18)",
+    `18-30`="[18,31)",
+    `31-50`="[31,51)",
+    `51+`="[51,190000)",
+    out.as.factor = F
+  )]
+  #d[,c_analysisAgeCat_hybrid:=cut(c_analysisAge_hybrid,breaks = c(10,18,30,50,200),include.lowest = T)]
   xtabs(~d$c_analysisCat_hybrid+d$c_analysisYear_hybrid)
   xtabs(~d$c_analysisAgeCat_hybrid)
   
