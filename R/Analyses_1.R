@@ -385,7 +385,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + geom_line()
   q <- q + geom_point()
   q <- q + facet_grid(.~bornSex)
-  #q <- q + scale_color_brewer("Age",palette="Set1")
+  q <- q + scale_color_brewer("Age at first\ndiagnosis",palette="Set1")
   q <- q + scale_x_continuous("Year",
                               breaks=seq(2001,2020,2))
   q <- q + scale_y_continuous("Number of people/10,000 population")
@@ -394,6 +394,8 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
   SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex_age_incidence.png"))
+  q <- q + labs(caption=NULL)
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex_age_incidence_no_caption.png"))
   
   q <- ggplot(agg_together,aes(x=analysisYear_z,y=N/pop*10000,colour=definition))
   q <- q + geom_line()
