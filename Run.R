@@ -57,6 +57,7 @@ library(ggplot2)
 
 prev <- CleanDataPrevalenceGD()
 d <- CleanDataIncidentGD(apply_sex_age_cleaning=TRUE)
+xtabs(~d$excluded, addNA=T)
 natasa(d)
 saveRDS(d, file=fs::path(org::project$data_raw,"clean","dz.RDS"))
 saveRDS(d, file=fs::path(org::project$data_raw,"natasa","dz.RDS"))
