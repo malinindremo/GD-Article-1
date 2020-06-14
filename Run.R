@@ -42,9 +42,9 @@ fs::dir_create(fs::path(org::project$results_today,"analyses_treatments"))
 fs::dir_create(fs::path(org::project$results_today,"analyses_hybrid"))
 fs::dir_create(fs::path(org::project$results_today,"analyses_together"))
 fs::dir_create(fs::path(org::project$results_today,"hormones_surgeries_before_diagnosis"))
-fs::dir_create(fs::path(org::project$results_today,"comorbidity"))
-fs::dir_create(fs::path(org::project$results_today,"comorbidity_with_control_assigned"))
-fs::dir_create(fs::path(org::project$results_today,"comorbidity_with_control_opposite"))
+fs::dir_create(fs::path(org::project$results_today,"comorbidity_2"))
+#fs::dir_create(fs::path(org::project$results_today,"comorbidity_with_control_assigned"))
+#fs::dir_create(fs::path(org::project$results_today,"comorbidity_with_control_opposite"))
 
 fs::dir_create(fs::path(org::project$data_raw,"natasa"))
 
@@ -54,6 +54,7 @@ fs::dir_create(fs::path(org::project$data_raw,"natasa"))
 
 library(data.table)
 library(ggplot2)
+library(logbin)
 
 prev <- CleanDataPrevalenceGD()
 d <- CleanDataIncidentGD(apply_sex_age_cleaning=TRUE)
@@ -144,20 +145,20 @@ Validate_1(d, byvar="c_analysisCat_F64_089_ge4")
 Validate_1(d, byvar="c_analysisCat_F64_089_ge10")
 validate_hormones_and_no_diagnoses(d)
 
-d_oneplusdiag <- d[!is.na(c_analysisCat_oneplusdiag) & excluded=="No"]
+d_oneplusdiag <- d[c_analysisCat_oneplusdiag=="numF64_089>=1, first diag: [2001-01-01, 2015-12-31]" & excluded=="No"]
 nrow(d_oneplusdiag)
 d_oneplusdiag[,analysisCat_z:=c_analysisCat_oneplusdiag]
 d_oneplusdiag[,analysisYear_z:=c_analysisYear_oneplusdiag]
 d_oneplusdiag[,analysisAgeCat_z:=c_analysisAgeCat_oneplusdiag]
 
-dz <- d[!is.na(c_analysisCat_treatments) & excluded=="No"]
+dz <- d[c_analysisCat_treatments=="numF64_089>=1 & hormones/surgery, first diag: [2001-01-01, 2015-12-31], first hormones/surgery>=2001-01-01" & excluded=="No"]
 nrow(dz)
 dz[,analysisCat_z:=c_analysisCat_treatments]
 dz[,analysisYear_z:=c_analysisYear_treatments]
 dz[,analysisAgeCat_z:=c_analysisAgeCat_treatments]
 Analyses_1(dz=dz, d_oneplusdiag=d_oneplusdiag, pop=GetPop(), folder="analyses_treatments")
 
-dz <- d[!is.na(c_analysisCat_diag) & excluded=="No"]
+dz <- d[c_analysisCat_diag=="numF64_089>=4, first diag: [2001-01-01, 2015-12-31]" & excluded=="No"]
 dz[,analysisCat_z:=c_analysisCat_diag]
 dz[,analysisYear_z:=c_analysisYear_diag]
 dz[,analysisAgeCat_z:=c_analysisAgeCat_diag]
@@ -181,6 +182,13 @@ xtabs(~dz$excluded)
 sink()
 
 # comorbidity
+dz <- d[!is.na(c_analysisCat_diag) & excluded=="No"]
+dz[,N:=1]
+xtabs(~dz$c_analysisCat_diag)
+comorbidity_2(dz=dz, folder="comorbidity_2")
+
+### end here
+# comorbidity - old
 dz <- d[c_analysisCat_hybrid=="Hybrid" & excluded=="No"]
 dz[,N:=1]
 comorbidity(dz=dz, folder="comorbidity")

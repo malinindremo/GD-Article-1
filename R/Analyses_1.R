@@ -272,7 +272,7 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   )
   p[["Within 51+, testing time*assigned sex"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
   
-  #####
+  ##### 10-17 aM
   
   fit0 <- glm(
     N~offset(log(pop)),
@@ -287,6 +287,8 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   p[["Within 10-17 & assigned male, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
   est[["Within 10-17 & assigned male, testing time"]] <- extract_poisson(fit1)
   
+  # 10-17 aF
+  
   fit0 <- glm(
     N~offset(log(pop)),
     data=agg[analysisAgeCat_z=="10-17" & bornSex=="Assigned female"],
@@ -299,6 +301,36 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   )
   p[["Within 10-17 & assigned female, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
   est[["Within 10-17 & assigned female, testing time"]] <- extract_poisson(fit1)
+  
+  ##### 18-30 aM
+  
+  fit0 <- glm(
+    N~offset(log(pop)),
+    data=agg[analysisAgeCat_z=="18-30" & bornSex=="Assigned male"],
+    family="poisson"
+  )
+  fit1 <- glm(
+    N~analysisYear_z+offset(log(pop)),
+    data=agg[analysisAgeCat_z=="18-30" & bornSex=="Assigned male"],
+    family="poisson"
+  )
+  p[["Within 18-30 & assigned male, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  est[["Within 18-30 & assigned male, testing time"]] <- extract_poisson(fit1)
+  
+  # 18-30 aF
+  
+  fit0 <- glm(
+    N~offset(log(pop)),
+    data=agg[analysisAgeCat_z=="18-30" & bornSex=="Assigned female"],
+    family="poisson"
+  )
+  fit1 <- glm(
+    N~analysisYear_z+offset(log(pop)),
+    data=agg[analysisAgeCat_z=="18-30" & bornSex=="Assigned female"],
+    family="poisson"
+  )
+  p[["Within 18-30 & assigned female, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  est[["Within 18-30 & assigned female, testing time"]] <- extract_poisson(fit1)
   
   #####
   
@@ -327,6 +359,36 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   )
   p[["Within 31-50 & assigned female, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
   est[["Within 31-50 & assigned female, testing time"]] <- extract_poisson(fit1)
+  
+  ##### 51+ aM
+  
+  fit0 <- glm(
+    N~offset(log(pop)),
+    data=agg[analysisAgeCat_z=="51+" & bornSex=="Assigned male"],
+    family="poisson"
+  )
+  fit1 <- glm(
+    N~analysisYear_z+offset(log(pop)),
+    data=agg[analysisAgeCat_z=="51+" & bornSex=="Assigned male"],
+    family="poisson"
+  )
+  p[["Within 51+ & assigned male, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  est[["Within 51+ & assigned male, testing time"]] <- extract_poisson(fit1)
+  
+  # 51+ aF
+  
+  fit0 <- glm(
+    N~offset(log(pop)),
+    data=agg[analysisAgeCat_z=="51+" & bornSex=="Assigned female"],
+    family="poisson"
+  )
+  fit1 <- glm(
+    N~analysisYear_z+offset(log(pop)),
+    data=agg[analysisAgeCat_z=="51+" & bornSex=="Assigned female"],
+    family="poisson"
+  )
+  p[["Within 51+ & assigned female, testing time"]] <- lmtest::lrtest(fit1,fit0)$"Pr(>Chisq)"[2]
+  est[["Within 51+ & assigned female, testing time"]] <- extract_poisson(fit1)
   
   #####
   

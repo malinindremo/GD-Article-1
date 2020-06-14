@@ -6,7 +6,7 @@ natasa <- function(d){
             
             "isBornMale",
             "bornSex",
-            "c_analysisSex_hybrid",
+            "c_analysisSex_diag",
             
             "dateFirst_F64_089",
             "numF64_089",
@@ -30,15 +30,15 @@ natasa <- function(d){
             "lopnr_analysis_group",
             
             "c_analysisCat_treatments",
-            "c_analysisCat_diag",
+            "c_analysisCat_hybrid",
             "c_analysisCat_oneplusdiag",
             
-            "c_analysisCat_hybrid",
-            "c_analysisDate_hybrid",
-            "c_analysisAge_hybrid",
-            "c_analysisAgeCat_hybrid",
-            "c_analysisYear_hybrid",
-            "c_analysisYearCat_hybrid",
+            "c_analysisCat_diag",
+            "c_analysisDate_diag",
+            "c_analysisAge_diag",
+            "c_analysisAgeCat_diag",
+            "c_analysisYear_diag",
+            "c_analysisYearCat_diag",
             
             "comorbid_F70_to_F79",
             "comorbid_F80_R47",
