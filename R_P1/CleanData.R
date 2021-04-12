@@ -62,7 +62,83 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   rx <- data.table(haven::read_sas(fs::path(org::project$data_raw,"Sos","ut_r_lmed_10218_2017.sas7bdat")))
   demografi <- data.table(haven::read_sas(fs::path(org::project$data_raw,"SCB","demografi.sas7bdat")))
   sex <- data.table(haven::read_sas(fs::path(org::project$data_raw,"SCB","kon.sas7bdat")))
- 
+  
+  # lan
+  x_lan <- rbind(
+    links_assigned[,.(
+      lopnr = lopnr_fall,
+      lan = lan
+    )],
+    links_assigned[,.(
+      lopnr = lopnr_kontroll,
+      lan = lan
+    )],
+    
+    links_opposite[,.(
+      lopnr = lopnr_fall,
+      lan = lan
+    )],
+    links_opposite[,.(
+      lopnr = lopnr_kontroll,
+      lan = lan
+    )]
+  )
+  x_lan <- unique(x_lan)
+  # if there are doubles, just pick one
+  x_lan[,N:=1:.N,by=.(lopnr)]
+  x_lan[N>=2]
+  x_lan <- x_lan[N==1]
+  x_lan[,N:=NULL] 
+  
+  # 01	Stockholms län
+  # 03	Uppsala län
+  # 04	Södermanlands län
+  # 05	Östergötlands län
+  # 06	Jönköpings län
+  # 07	Kronobergs län
+  # 08	Kalmar län
+  # 09	Gotlands län
+  # 10	Blekinge län
+  # 12	Skåne län
+  # 13	Hallands län
+  # 14	Västra Götalands län
+  # 15	Älvsborgs län
+  # 17	Värmlands län
+  # 18	Örebro län
+  # 19	Västmanlands län
+  # 20	Dalarnas län
+  # 21	Gävleborgs län
+  # 22	Västernorrlands län
+  # 23	Jämtlands län
+  # 24	Västerbottens län
+  # 25	Norrbottens län
+  
+  x_lan[,
+    region_3 := dplyr::case_when(
+      lan == "01" ~ "east", #	Stockholms län
+      lan == "03" ~ "east", #	Uppsala län
+      lan == "04"	~ "east", #Södermanlands län
+      lan == "05"	~ "east", #Östergötlands län
+      lan == "06"	~ "south", #Jönköpings län
+      lan == "07"	~ "south", #Kronobergs län
+      lan == "08"	~ "south", #Kalmar län
+      lan == "09"	~ "south", #Gotlands län
+      lan == "10"	~ "south", #Blekinge län
+      lan == "12"	~ "south", #Skåne län
+      lan == "13"	~ "south", #Hallands län
+      lan == "14"	~ "south", #Västra Götalands län
+      lan == "15"	~ "south", #Älvsborgs län (Västra Götalands län)
+      lan == "17"	~ "north", #Värmlands län
+      lan == "18"	~ "east", #Örebro län
+      lan == "19"	~ "east", #Västmanlands län
+      lan == "20"	~ "north", #Dalarnas län
+      lan == "21"	~ "north", #Gävleborgs län
+      lan == "22"	~ "north", #Västernorrlands län
+      lan == "23"	~ "north", #Jämtlands län
+      lan == "24"	~ "north", #Västerbottens län
+      lan == "25"	~ "north", #Norrbottens län
+    )]
+  # 
   #birth_reg <- data.table(haven::read_sas(fs::path(org::project$data_raw,"Sos","UT_MFR_BARN_10218_2017.sas7bdat"),encoding="UTF-8"))
   #birth_reg <- data.table(haven::read_sas(fs::path(org::project$data_raw,"SCB","fp_lev_fall_och_kontroller_1.sas7bdat"),encoding="UTF-8"))
   
@@ -770,20 +846,41 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   
   # including matched controls
   setnames(d,"LopNr","lopnr_fall")
-  links_assigned <- links_assigned[lopnr_fall %in% d[c_analysisCat_diag=="numF64_089>=4, first diag: [2001-01-01, 2015-12-31]"]$lopnr_fall]
-  links_opposite <- links_opposite[lopnr_fall %in% d[c_analysisCat_diag=="numF64_089>=4, first diag: [2001-01-01, 2015-12-31]"]$lopnr_fall]
+  print("Number of controls assigned")
+  print(length(unique(links_assigned$lopnr_kontroll)))
+  
+  print("Number of controls opposite")
+  print(length(unique(links_opposite$lopnr_kontroll)))
   
   exclude_because_in_both <- links_opposite$lopnr_kontroll[links_opposite$lopnr_kontroll %in% links_assigned$lopnr_kontroll]
   links_assigned <- links_assigned[!lopnr_kontroll %in% exclude_because_in_both]
   links_opposite <- links_opposite[!lopnr_kontroll %in% exclude_because_in_both]
   
+  print("exclude_because_in_both controls")
+  print(length(unique(exclude_because_in_both))) # 383
+  
   exclude_because_cases <- d[!is.na(c_analysisCat_diag) & lopnr_fall %in% links_assigned$lopnr_kontroll]$lopnr_fall
+  print("exclude_because_cases controls assigned")
+  print(length(unique(exclude_because_cases))) # 6
   links_assigned <- links_assigned[!lopnr_kontroll %in% exclude_because_cases]
+  
   exclude_because_cases <- d[!is.na(c_analysisCat_diag) & lopnr_fall %in% links_opposite$lopnr_kontroll]$lopnr_fall
+  print("exclude_because_cases controls opposite")
+  print(length(unique(exclude_because_cases))) # 9
   links_opposite <- links_opposite[!lopnr_kontroll %in% exclude_because_cases]
   
-  xtabs(~d[links_assigned, on = "lopnr_fall==lopnr_kontroll",]$c_analysisCat_diag)
-  xtabs(~d[links_opposite, on = "lopnr_fall==lopnr_kontroll",]$c_analysisCat_diag)
+  print("length(unique(links_assigned$lopnr_kontroll))")
+  print(length(unique(links_assigned$lopnr_kontroll))) # 40944
+  print("length(unique(links_opposite$lopnr_kontroll))")
+  print(length(unique(links_opposite$lopnr_kontroll))) # 40985
+  
+  print("restrict to those with diag cases")
+  links_assigned <- links_assigned[lopnr_fall %in% d[c_analysisCat_diag=="numF64_089>=4, first diag: [2001-01-01, 2015-12-31]"]$lopnr_fall]
+  links_opposite <- links_opposite[lopnr_fall %in% d[c_analysisCat_diag=="numF64_089>=4, first diag: [2001-01-01, 2015-12-31]"]$lopnr_fall]
+  print("length(unique(links_assigned$lopnr_kontroll))")
+  print(length(unique(links_assigned$lopnr_kontroll))) # 23804
+  print("length(unique(links_opposite$lopnr_kontroll))")
+  print(length(unique(links_opposite$lopnr_kontroll))) # 23829
   
   d[links_assigned, on = "lopnr_fall==lopnr_kontroll",c_analysisCat_diag:="control_assigned"]
   d[links_assigned, on = "lopnr_fall==lopnr_kontroll",lopnr_analysis_group:=i.lopnr_fall]
@@ -793,11 +890,37 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   
   d[c_analysisCat_diag=="numF64_089>=4, first diag: [2001-01-01, 2015-12-31]",lopnr_analysis_group:=lopnr_fall]
   
+  print(xtabs(~d$c_analysisCat_diag))
+  
+  # make sure the excluded values work
+  d[, excluded_case := NULL]
+  d[!c_analysisCat_diag %in% 
+      c(
+        "control_opposite",
+        "control_assigned"
+      ),
+    excluded_case := excluded
+  ]
+  setorder(d, lopnr_analysis_group, excluded_case)
+  d[, excluded_case := zoo::na.locf(rev(excluded_case)),by=.(lopnr_analysis_group)]
+  d[c_analysisCat_diag %in% 
+      c(
+        "control_opposite",
+        "control_assigned"
+      ) &
+    excluded=="No" & 
+    excluded_case!="No", c_analysisCat_diag := "Control whose case was excluded"
+  ]
+  print(xtabs(~d$c_analysisCat_diag))
+  d[, excluded_case := NULL]
+
   sum(is.na(d[!is.na(c_analysisCat_diag)]$c_analysisDate_diag))
   d[lopnr_analysis_group==798]
   d[!is.na(lopnr_analysis_group),c_analysisDate_diag:=mean(c_analysisDate_diag,na.rm=T),by=.(lopnr_analysis_group)]
   d[lopnr_analysis_group==798]
   d[lopnr_analysis_group==21366]
+  
+  print(xtabs(~d$c_analysisCat_diag))
   
   # creating analysis sex variables
   
@@ -818,8 +941,10 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   d[
     c_analysisCat_diag %in% c("control_opposite","control_assigned") & 
       c_analysisAge_diag<10,
-    c_analysisCat_diag := NA
+    c_analysisCat_diag := "Control age under 10"
   ]
+  print("remove the people who are under 10")
+  print(xtabs(~d$c_analysisCat_diag))
   # END remove the people who are under 10
   d[,c_analysisAgeCat_diag:=fancycut::fancycut(
     c_analysisAge_diag,
@@ -989,13 +1114,26 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   d[,comorbid_X60_to_X84:=dateFirst_X60_to_X84<c_analysisDate_diag]
   d[is.na(comorbid_X60_to_X84),comorbid_X60_to_X84:=FALSE]
   
-  co <- stringr::str_subset(names(dz),"^comorbid")
+  co <- stringr::str_subset(names(d),"^comorbid")
   d[,comorbid_any := FALSE]
   for(i in co){
     d[get(i)==T, comorbid_any:=T]
   }
   
   setnames(d,"lopnr_fall","LopNr")
+  
+  # add lan in
+  d[
+    x_lan,
+    on=c("LopNr==lopnr"),
+    lan := lan
+    ]
+  # add lan in
+  d[
+    x_lan,
+    on=c("LopNr==lopnr"),
+    region_3 := region_3
+    ]
   
   for(i in 1:5) cat("**** DONE \n")
   

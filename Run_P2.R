@@ -20,10 +20,10 @@ org::initialize_project(
     fs::path("/Users","Georgios","Documents","Research-Malin","GD-Article-1")
   ),
   results = c(
-    fs::path("/volumes", "data", "box", "Indremo", "results"),
-    fs::path("/Volumes", "data", "box", "Indremo", "results"),
-    fs::path("/Users","malin976", "Box Sync", "Gender dysphoria", "results"),
-    fs::path("/Users","Georgios", "Box Sync", "Gender dysphoria", "results")
+    fs::path("/volumes", "data", "box", "Indremo", "results", "P2"),
+    fs::path("/Volumes", "data", "box", "Indremo", "results", "P2"),
+    fs::path("/Users","malin976", "Box Sync", "Gender dysphoria", "results", "P2"),
+    fs::path("/Users","Georgios", "Box Sync", "Gender dysphoria", "results", "P2")
   ),
   data_raw = c(
     fs::path("/volumes","data","local","org","data_raw","code_minor","2018","GD-Article-1"),
@@ -31,10 +31,11 @@ org::initialize_project(
     fs::path("/Users","malin976","Documents","Article-1-data"),
     fs::path("/Volumes","KonsdysforiregisterKaramanis")
   ),
+  folders_to_be_sourced = "R_P2",
   create_folders = TRUE
 )
 
-fs::dir_create(fs::path(org::project$data_raw,"clean"))
+fs::dir_create(fs::path(org::project$data_raw,"P2","clean"))
 fs::dir_create(fs::path(org::project$results_today,"descriptives"))
 fs::dir_create(fs::path(org::project$results_today,"validation"))
 fs::dir_create(fs::path(org::project$results_today,"analyses_diag"))
@@ -46,7 +47,7 @@ fs::dir_create(fs::path(org::project$results_today,"comorbidity_2"))
 #fs::dir_create(fs::path(org::project$results_today,"comorbidity_with_control_assigned"))
 #fs::dir_create(fs::path(org::project$results_today,"comorbidity_with_control_opposite"))
 
-fs::dir_create(fs::path(org::project$data_raw,"natasa"))
+fs::dir_create(fs::path(org::project$data_raw,"P2","natasa"))
 
 ################
 # Load libraries
@@ -56,16 +57,27 @@ library(data.table)
 library(ggplot2)
 library(logbin)
 
+# can skip if you dont want to recreate the datasets
 prev <- CleanDataPrevalenceGD()
 d <- CleanDataIncidentGD(apply_sex_age_cleaning=TRUE)
 xtabs(~d$excluded, addNA=T)
+xtabs(~d$c_analysisCat_diag)
 natasa(d)
-saveRDS(d, file=fs::path(org::project$data_raw,"clean","dz.RDS"))
-saveRDS(d, file=fs::path(org::project$data_raw,"natasa","dz.RDS"))
-haven::write_sav(d, fs::path(org::project$data_raw, "natasa", "dz.sav"))
+saveRDS(d, file=fs::path(org::project$data_raw,"P2","clean","dz.RDS"))
+saveRDS(d, file=fs::path(org::project$data_raw,"P2","natasa","dz.RDS"))
+haven::write_sav(d, fs::path(org::project$data_raw,"P2", "natasa", "dz.sav"))
+# end skip
 
-d <- readRDS(file=fs::path(org::project$data_raw,"clean","dz.RDS"))
+d <- readRDS(file=fs::path(org::project$data_raw,"P2","clean","dz.RDS"))
 
+# P2 ----
+time_to_diagnosis_1p_diagnosis(d)
+time_to_diagnosis_4p_diagnosis(d)
+P2_tab1(d)
+P2_tab2(d)
+
+
+# P2 end----
 d[
   numF64_089_2006_01_to_2016_12==0 & 
     excluded=="No" & 
@@ -110,9 +122,13 @@ mean(!is.na(d[
 
 
 # numbers
+xtabs(~d$excluded)
+xtabs(~d$c_analysisCat_diag)
+xtabs(~d[excluded=="No"]$c_analysisCat_diag)
+
 sink(fs::path(org::project$results_today,"numbers.txt"))
 print("numbers of people with an F64_089 diagnosis")
-sum(d$numF64_089 >= 1,na.rm=T) # 4378
+sum(d$numF64_089 >= 1,na.rm=T) # 4480
 print("numbers of people with first F64_089 >= 2001-01-01")
 sum(d$dateFirst_F64_089 >= "2001-01-01",na.rm=T) # 4378
 print("looking at exclusions")
@@ -120,7 +136,8 @@ xtabs(~excluded, data=d[dateFirst_F64_089 >= "2001-01-01"])
 print("excluded 100 due to ICD8/9")
 print("excluded 22 due to legal sex change before F64/0/8/9 diag")
 print("excluded 166 due to Hormones/surgery before F64.0/8/9 diag")
-print("left with 4090 people")
+print("excluded 4 due to first F64.0/8/9 diag before 10 years old")
+print("left with 4086 people")
 print("looking at validation dataset - first diagnosis [2006-2014]")
 print(nrow(d[dateFirst_F64_089 >= "2006-01-01" & dateFirst_F64_089 <= "2014-12-31" & excluded=="No"]))
 print("looking at trend dataset [2001-2015]")
@@ -138,8 +155,6 @@ sum(!is.na(d[excluded=="No"]$c_analysisCat_oneplusdiag))
 d[LopNr == 20842]
 #LossOfPeopleTreatments(d,type = "treatments")
 #LossOfPeopleTreatments(d,type = "diag")
-
-time_to_diagnosis(d)
 
 Validate_1(d, byvar="c_analysisCat_F64_089_ge4")
 Validate_1(d, byvar="c_analysisCat_F64_089_ge10")
@@ -181,25 +196,22 @@ sink(fs::path(org::project$results_today,"lost_hybrid.txt"))
 xtabs(~dz$excluded)
 sink()
 
-# comorbidity
-dz <- d[!is.na(c_analysisCat_diag) & excluded=="No"]
-dz[,N:=1]
-xtabs(~dz$c_analysisCat_diag)
-comorbidity_2(dz=dz, folder="comorbidity_2")
 
-### end here
-# comorbidity - old
-dz <- d[c_analysisCat_hybrid=="Hybrid" & excluded=="No"]
-dz[,N:=1]
-comorbidity(dz=dz, folder="comorbidity")
+  
 
-xtabs(~d$c_analysisCat_hybrid)
-dz <- d[c_analysisCat_hybrid %in% c("Hybrid","control_assigned") & excluded=="No"]
-dz[,N:=1]
-comorbidity(dz=dz, folder="comorbidity_with_control_assigned")
-
-unique(d$c_analysisCat_hybrid)
-dz <- d[c_analysisCat_hybrid %in% c("Hybrid","control_opposite") & excluded=="No"]
-dz[,N:=1]
-comorbidity(dz=dz, folder="comorbidity_with_control_opposite")
+# ### end here
+# # comorbidity - old
+# dz <- d[c_analysisCat_hybrid=="Hybrid" & excluded=="No"]
+# dz[,N:=1]
+# comorbidity(dz=dz, folder="comorbidity")
+# 
+# xtabs(~d$c_analysisCat_hybrid)
+# dz <- d[c_analysisCat_hybrid %in% c("Hybrid","control_assigned") & excluded=="No"]
+# dz[,N:=1]
+# comorbidity(dz=dz, folder="comorbidity_with_control_assigned")
+# 
+# unique(d$c_analysisCat_hybrid)
+# dz <- d[c_analysisCat_hybrid %in% c("Hybrid","control_opposite") & excluded=="No"]
+# dz[,N:=1]
+# comorbidity(dz=dz, folder="comorbidity_with_control_opposite")
 
