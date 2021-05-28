@@ -42,6 +42,7 @@ fs::dir_create(fs::path(org::project$results_today,"analyses_diag"))
 fs::dir_create(fs::path(org::project$results_today,"analyses_treatments"))
 fs::dir_create(fs::path(org::project$results_today,"analyses_hybrid"))
 fs::dir_create(fs::path(org::project$results_today,"analyses_together"))
+fs::dir_create(fs::path(org::project$results_today,"analyses_together_weighted_by_coverage"))
 fs::dir_create(fs::path(org::project$results_today,"hormones_surgeries_before_diagnosis"))
 fs::dir_create(fs::path(org::project$results_today,"comorbidity_2"))
 #fs::dir_create(fs::path(org::project$results_today,"comorbidity_with_control_assigned"))
@@ -56,6 +57,7 @@ fs::dir_create(fs::path(org::project$data_raw,"P1","natasa"))
 library(data.table)
 library(ggplot2)
 library(logbin)
+# devtools::install_github("jackwasey/icd")
 
 prev <- CleanDataPrevalenceGD()
 d <- CleanDataIncidentGD(apply_sex_age_cleaning=TRUE)
@@ -67,6 +69,23 @@ saveRDS(d, file=fs::path(org::project$data_raw,"P1","natasa","dz.RDS"))
 haven::write_sav(d, fs::path(org::project$data_raw,"P1", "natasa", "dz.sav"))
 
 d <- readRDS(file=fs::path(org::project$data_raw,"P1","clean","dz.RDS"))
+
+# coverage?/
+coverage <- d[!is.na(lan),.(
+  N=.N
+), keyby=.(
+  year = lubridate::year(dateFirst_F64_089),
+  lan
+)]
+coverage <- dcast.data.table(
+  coverage,
+  lan ~ year,
+  fill = 0
+)
+coverage[, `NA` := NULL]
+writexl::write_xlsx(coverage, fs::path(org::project$results_today,"f64_089_coverage_by_lan.xlsx"))
+
+
 
 d[
   numF64_089_2006_01_to_2016_12==0 & 
@@ -177,10 +196,19 @@ dz[,analysisYear_z:=c_analysisYear_hybrid]
 dz[,analysisAgeCat_z:=c_analysisAgeCat_hybrid]
 Analyses_1(dz=dz, d_oneplusdiag=d_oneplusdiag,pop=GetPop(), folder="analyses_hybrid")
 
+# Figure 2, Figure 3
 analyses_together_2(
   d,
-  pop=GetPop(),
+  pop_for_diagnosis = GetPop(), 
+  pop_for_legal_sex_change = GetPop(), 
   folder="analyses_together")
+
+# Figure 2, Figure 3
+analyses_together_2(
+  d,
+  pop_for_diagnosis = GetPop(weighted = T), 
+  pop_for_legal_sex_change = GetPop(), 
+  folder="analyses_together_weighted_by_coverage")
 
 # losing people?
 dz <- d[c_analysisCat_hybrid=="Hybrid"]

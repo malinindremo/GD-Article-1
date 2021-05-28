@@ -610,7 +610,7 @@ analyses_together_1 <- function(dz, d_oneplusdiag, prev, pop, folder){
 }
 
 
-analyses_together_2 <- function(d, pop, folder){
+analyses_together_2 <- function(d, pop_for_diagnosis, pop_for_legal_sex_change, folder){
   agg <- d[!is.na(c_analysisCat_oneplusdiag),
             .(
               `Diagnoses (1+)`=sum(!is.na(c_analysisCat_oneplusdiag)),
@@ -638,7 +638,12 @@ analyses_together_2 <- function(d, pop, folder){
                    fs::path(org::project$results_today,folder,"raw_numbers_by_sex.xlsx"))
   
   long <- melt.data.table(agg, id.vars=c("bornSex","c_analysisYear_oneplusdiag"))
-  long[pop[ageCat=="All"],on=c("c_analysisYear_oneplusdiag==year","bornSex"),pop:=pop]
+  long[pop_for_diagnosis[ageCat=="All"],on=c("c_analysisYear_oneplusdiag==year","bornSex"),pop_for_diagnosis:=pop]
+  long[pop_for_legal_sex_change[ageCat=="All"],on=c("c_analysisYear_oneplusdiag==year","bornSex"),pop_for_legal_sex_change:=pop]
+  long[, pop := pop_for_diagnosis]
+  long[variable=="Legal sex change", pop := pop_for_legal_sex_change]
+  long[, pop_for_diagnosis := NULL]
+  long[, pop_for_legal_sex_change := NULL]
   xlsx::write.xlsx(
     long,
     fs::path(org::project$results_today,folder,"raw_numbers_by_sex_long.xlsx")
@@ -694,7 +699,7 @@ analyses_together_2 <- function(d, pop, folder){
                    fs::path(org::project$results_today,folder,"raw_numbers_by_sex_age.xlsx"))
   
   long <- melt.data.table(agg, id.vars=c("bornSex","c_analysisYear_oneplusdiag","c_analysisAgeCat_oneplusdiag"))
-  long[pop,on=c("c_analysisYear_oneplusdiag==year","bornSex","c_analysisAgeCat_oneplusdiag==ageCat"),pop:=pop]
+  long[pop_for_diagnosis,on=c("c_analysisYear_oneplusdiag==year","bornSex","c_analysisAgeCat_oneplusdiag==ageCat"),pop:=pop]
   xlsx::write.xlsx(
     long,
     fs::path(org::project$results_today,folder,"raw_numbers_by_sex_age_long.xlsx")

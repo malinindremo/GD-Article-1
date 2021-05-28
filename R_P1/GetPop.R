@@ -1,4 +1,4 @@
-GetPop <- function(){
+GetPop <- function(weighted = FALSE){
   pop <- data.table(readxl::read_excel(fs::path(org::project$home,"structural_data","pop.xlsx"),skip=0))
   pop <- melt.data.table(pop,id.vars=c("year","age"))
   setnames(pop,c("year","age","sex","pop"))
@@ -46,4 +46,20 @@ GetPop <- function(){
   pop3[,bornSex:="All"]
   
   pop <- rbind(pop0,pop1,pop2,pop3)
+  if(weighted){
+    d_coverage <- readxl::read_excel(fs::path(
+      org::project$data_raw,
+      "Coverage SKR_PAR_Psykiatri_Lakare.xlsx"
+    ))
+    setDT(d_coverage)
+    setnames(d_coverage, c(1,6), c("year", "coverage"))
+    d_coverage <- d_coverage[,.(
+      year = as.numeric(year),
+      coverage = coverage/100
+    )]
+    d_coverage <- na.omit(d_coverage)
+    pop <- pop[year %in% d_coverage$year]
+    pop[d_coverage, on="year", pop := pop*coverage]
+  }
+  pop[]
 }
