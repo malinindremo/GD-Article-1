@@ -184,12 +184,12 @@ CleanDataIncidentGD <- function(apply_sex_age_cleaning=TRUE){
   ## hormone prescription
   cat("****** Line 53 /",number_lines,"\n")
   rx[,isHormoneMTF:=FALSE]
-  for(i in c("^L02", "^G04CB01", "^C03DA01", "^G03H", "^G03C")){
+  for(i in c("^G04CB01", "^C03DA01", "^G03H", "^G03C")){
     rx[stringr::str_detect(atc,i),isHormoneMTF:=TRUE]
   }
   
   rx[,isHormoneFTM:=FALSE]
-  for(i in c("^G03B", "^L02")){
+  for(i in c("^G03B")){
     rx[stringr::str_detect(atc,i),isHormoneFTM:=TRUE]
   }
   

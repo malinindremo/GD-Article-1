@@ -36,6 +36,7 @@ org::initialize_project(
 )
 
 fs::dir_create(fs::path(org::project$data_raw,"P1","clean"))
+fs::dir_create(fs::path(org::project$data_raw,"P1","gunnar"))
 fs::dir_create(fs::path(org::project$results_today,"descriptives"))
 fs::dir_create(fs::path(org::project$results_today,"validation"))
 fs::dir_create(fs::path(org::project$results_today,"analyses_diag"))
@@ -67,6 +68,7 @@ natasa(d)
 saveRDS(d, file=fs::path(org::project$data_raw,"P1","clean","dz.RDS"))
 saveRDS(d, file=fs::path(org::project$data_raw,"P1","natasa","dz.RDS"))
 haven::write_sav(d, fs::path(org::project$data_raw,"P1", "natasa", "dz.sav"))
+haven::write_dta(d, fs::path(org::project$data_raw,"P1", "gunnar", "d_richard_to_gunnar.sav"))
 
 d <- readRDS(file=fs::path(org::project$data_raw,"P1","clean","dz.RDS"))
 
