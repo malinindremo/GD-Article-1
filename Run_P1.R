@@ -169,8 +169,10 @@ d[LopNr == 20842]
 
 time_to_diagnosis(d)
 
-Validate_1(d, byvar="c_analysisCat_F64_089_ge4")
-Validate_1(d, byvar="c_analysisCat_F64_089_ge10")
+# Validate_1(d, byvar="c_analysisCat_F64_089_ge4")
+Validate_1(d, byvar="c_analysisCat_F64_089_2006_01_to_2014_12_ge10", time_period_followup = "2006_01_to_2016_12")
+Validate_1(d, byvar="c_analysisCat_F64_089_2006_01_to_2009_12_ge10", time_period_followup = "2006_01_to_2011_12")
+Validate_1(d, byvar="c_analysisCat_F64_089_2010_01_to_2014_12_ge10", time_period_followup = "2010_01_to_2016_12")
 validate_hormones_and_no_diagnoses(d)
 
 d_oneplusdiag <- d[c_analysisCat_oneplusdiag=="numF64_089>=1, first diag: [2001-01-01, 2015-12-31]" & excluded=="No"]

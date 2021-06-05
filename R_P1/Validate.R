@@ -1,37 +1,41 @@
-Validate_1 <- function(d,byvar){
+Validate_1 <- function(d,byvar, time_period_followup){
   d[,xbyvar:=get(byvar)]
+  
+  
+  
   res <- d[excluded=="No",
            .(
              N=.N,
-             c_isHormone_2006_01_to_2016_12=sum(c_isHormone_2006_01_to_2016_12),
-             c_isSurgicalMasectomy_2006_01_to_2016_12=sum(c_isSurgicalMasectomy_2006_01_to_2016_12),
-             c_isSurgicalPenisTestProsth_2006_01_to_2016_12=sum(c_isSurgicalPenisTestProsth_2006_01_to_2016_12),
-             c_isSurgicalReconstVag_2006_01_to_2016_12=sum(c_isSurgicalReconstVag_2006_01_to_2016_12),
-             c_isSurgicalPenisAmp_2006_01_to_2016_12=sum(c_isSurgicalPenisAmp_2006_01_to_2016_12),
+             c_isHormone=sum(get(paste0("c_isHormone_",time_period_followup))),
+             c_isSurgicalMasectomy=sum(get(paste0("c_isSurgicalMasectomy_",time_period_followup))),
+             c_isSurgicalPenisTestProsth=sum(get(paste0("c_isSurgicalPenisTestProsth_",time_period_followup))),
+             c_isSurgicalReconstVag=sum(get(paste0("c_isSurgicalReconstVag_",time_period_followup))),
+             c_isSurgicalPenisAmp=sum(get(paste0("c_isSurgicalPenisAmp_",time_period_followup))),
              
-             num_people_c_isSurgical_2006_01_to_2016_12=sum(
-               c_isSurgicalMasectomy_2006_01_to_2016_12 |
-                 c_isSurgicalPenisTestProsth_2006_01_to_2016_12 |
-                 c_isSurgicalReconstVag_2006_01_to_2016_12 |
-                 c_isSurgicalPenisAmp_2006_01_to_2016_12
+             num_people_c_isSurgical=sum(
+               get(paste0("c_isSurgicalMasectomy_", time_period_followup)) |
+                 get(paste0("c_isSurgicalPenisTestProsth_", time_period_followup)) |
+                 get(paste0("c_isSurgicalReconstVag_", time_period_followup)) |
+                 get(paste0("c_isSurgicalPenisAmp_", time_period_followup))
              ),
              
-             num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12=sum(
-               c_isHormone_2006_01_to_2016_12 |
-                 c_isSurgicalMasectomy_2006_01_to_2016_12 |
-                 c_isSurgicalPenisTestProsth_2006_01_to_2016_12 |
-                 c_isSurgicalReconstVag_2006_01_to_2016_12 |
-                 c_isSurgicalPenisAmp_2006_01_to_2016_12
+             num_people_c_isSurgicalOrHormonal=sum(
+               get(paste0("c_isHormone_", time_period_followup)) |
+                 get(paste0("c_isSurgicalMasectomy_", time_period_followup)) |
+                 get(paste0("c_isSurgicalPenisTestProsth_", time_period_followup)) |
+                 get(paste0("c_isSurgicalReconstVag_", time_period_followup)) |
+                 get(paste0("c_isSurgicalPenisAmp_", time_period_followup))
              )
            ),
            keyby=.(
              bornSex,
              category=xbyvar
            )]
-  res[,perc_people_c_isSurgicalOrHormonal_2006_01_to_2016_12:=round(100*num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12/N,1)]
+  res[,perc_people_c_isSurgicalOrHormonal:=round(100*num_people_c_isSurgicalOrHormonal/N,1)]
   
-  res <- melt.data.table(res, id.vars=c("bornSex","category"))
+  res <- melt.data.table(res, id.vars=c("bornSex","category"), variable.factor = F)
   res <- dcast.data.table(res, bornSex+variable~category, value.var = "value")
+  res[variable!="N", variable := paste0(variable,"_", time_period_followup)]
   
   openxlsx::write.xlsx(res, file=
                          fs::path(org::project$results_today,"validation",glue::glue("Validate_{byvar}.xlsx")))
@@ -40,12 +44,12 @@ Validate_1 <- function(d,byvar){
   res <- d[excluded=="No",
            .(
              N=.N,
-             num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12=sum(
-               c_isHormone_2006_01_to_2016_12 |
-                 c_isSurgicalMasectomy_2006_01_to_2016_12 |
-                 c_isSurgicalPenisTestProsth_2006_01_to_2016_12 |
-                 c_isSurgicalReconstVag_2006_01_to_2016_12 |
-                 c_isSurgicalPenisAmp_2006_01_to_2016_12
+             num_people_c_isSurgicalOrHormonal=sum(
+               get(paste0("c_isHormone_", time_period_followup)) |
+                 get(paste0("c_isSurgicalMasectomy_", time_period_followup)) |
+                 get(paste0("c_isSurgicalPenisTestProsth_", time_period_followup)) |
+                 get(paste0("c_isSurgicalReconstVag_", time_period_followup)) |
+                 get(paste0("c_isSurgicalPenisAmp_", time_period_followup))
              )
            ),
            keyby=.(
@@ -54,21 +58,21 @@ Validate_1 <- function(d,byvar){
            )]
   setorder(res,bornSex,-category)
   res[,cum_N := cumsum(N),by=.(bornSex)]
-  res[,cum_num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12 := cumsum(num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12),by=.(bornSex)]
-  res[,perc_people_c_isSurgicalOrHormonal_2006_01_to_2016_12:=round(100*num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12/N,1)]
-  res[,perc_cum_people_c_isSurgicalOrHormonal_2006_01_to_2016_12:=round(100*cum_num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12/cum_N,1)]
+  res[,cum_num_people_c_isSurgicalOrHormonal := cumsum(num_people_c_isSurgicalOrHormonal),by=.(bornSex)]
+  res[,perc_people_c_isSurgicalOrHormonal:=round(100*num_people_c_isSurgicalOrHormonal/N,1)]
+  res[,perc_cum_people_c_isSurgicalOrHormonal:=round(100*cum_num_people_c_isSurgicalOrHormonal/cum_N,1)]
   res[,cum_category:=stringr::str_replace_all(category,"^([0-9]+) ","\\1+ ")]
   setorder(res,bornSex,category)
   setcolorder(res,c(
     "bornSex",
     "category",
     "N",
-    "num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12",
-    "perc_people_c_isSurgicalOrHormonal_2006_01_to_2016_12",
+    "num_people_c_isSurgicalOrHormonal",
+    "perc_people_c_isSurgicalOrHormonal",
     "cum_category",
     "cum_N",
-    "cum_num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12",
-    "perc_cum_people_c_isSurgicalOrHormonal_2006_01_to_2016_12"
+    "cum_num_people_c_isSurgicalOrHormonal",
+    "perc_cum_people_c_isSurgicalOrHormonal"
   ))
 
   openxlsx::write.xlsx(res, file=
@@ -82,26 +86,26 @@ Validate_1 <- function(d,byvar){
   res <- res[,c(
     "bornSex",
     "category",
-    "perc_people_c_isSurgicalOrHormonal_2006_01_to_2016_12",
-    "num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12",
+    "perc_people_c_isSurgicalOrHormonal",
+    "num_people_c_isSurgicalOrHormonal",
     "N",
     "cum_category",
-    "perc_cum_people_c_isSurgicalOrHormonal_2006_01_to_2016_12",
-    "cum_num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12",
+    "perc_cum_people_c_isSurgicalOrHormonal",
+    "cum_num_people_c_isSurgicalOrHormonal",
     "cum_N"
   )]
   res1 <- res[,c(
     "bornSex",
     "category",
-    "perc_people_c_isSurgicalOrHormonal_2006_01_to_2016_12",
-    "num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12",
+    "perc_people_c_isSurgicalOrHormonal",
+    "num_people_c_isSurgicalOrHormonal",
     "N"
   )]
   res2 <- res[,c(
     "bornSex",
     "cum_category",
-    "perc_cum_people_c_isSurgicalOrHormonal_2006_01_to_2016_12",
-    "cum_num_people_c_isSurgicalOrHormonal_2006_01_to_2016_12",
+    "perc_cum_people_c_isSurgicalOrHormonal",
+    "cum_num_people_c_isSurgicalOrHormonal",
     "cum_N"
     )]
   res1[,type:="Percentage"]
@@ -133,6 +137,7 @@ Validate_1 <- function(d,byvar){
   q <- q + facet_wrap(type~bornSex,scales="free_x")
   q <- q + scale_y_continuous("Percentage receiving GCMI",lim=c(0,100))
   q <- q + scale_x_discrete("Number of GD diagnoses")
+  q <- q + labs(title=paste0("Follow-up period = ", time_period_followup))
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
   SaveA4(q, fs::path(org::project$results_today,"validation",glue::glue("double_table_Validate_{byvar}.png")))
