@@ -19,9 +19,14 @@ natasa <- function(d){
             "c_dateFirstHormonePubBlock",
             
             "c_dateFirst_SurgicalMasectomy",
+            "c_dateFirst_SurgicalBreastReconstAndOtherBreastOpsFTM",
+            "c_dateFirst_SurgicalPenisTestProsth",
+            "c_dateFirst_SurgicalInternalGenital",
+            "c_dateFirst_SurgicalKolpectomy",
+            "c_dateFirst_SurgicalBreastReconstAndOtherBreastOpsMTF",
             "c_dateFirst_SurgicalReconstVag",
             "c_dateFirst_SurgicalPenisAmp",
-            "c_dateFirst_SurgicalPenisTestProsth",
+            "c_dateFirst_SurgicalLarynx",
             
             "c_dateFirst_surgery_hormones",
             
@@ -79,10 +84,7 @@ natasa <- function(d){
   labs[var=="c_dateFirstHormoneMTF", description:="(Independent of time/diag): The first observed date of F->M hormones (cleaning applied for appropriate sex)"]
   labs[var=="c_dateFirstHormonePubBlock", description:="(Independent of time/diag): The first observed date of puberty blocker hormones (cleaning applied for appropriate age)"]
   
-  labs[var=="c_dateFirst_SurgicalMasectomy", description:="(Independent of time/diag): First observed surgical date of a mastectomy"]
-  labs[var=="c_dateFirst_SurgicalReconstVag", description:="(Independent of time/diag): First observed surgical date of a reconstructed vagina"]
-  labs[var=="c_dateFirst_SurgicalPenisAmp", description:="(Independent of time/diag): First observed surgical date of a penis amputation"]
-  labs[var=="c_dateFirst_SurgicalPenisTestProsth", description:="(Independent of time/diag): First observed surgical date of a penis/testicle prosthetic"]
+  labs[var=="c_dateFirst_Surgical*", description:="(Independent of time/diag): First observed surgical date of a [surgery]"]
   
   labs[var=="c_dateFirst_surgery_hormones", description:="(Independent of time/diag): First observed date of hormones or surgery"]
   

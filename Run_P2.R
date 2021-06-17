@@ -62,9 +62,7 @@ prev <- CleanDataPrevalenceGD()
 d <- CleanDataIncidentGD(apply_sex_age_cleaning=TRUE)
 xtabs(~d$excluded, addNA=T)
 xtabs(~d$c_analysisCat_diag)
-natasa(d)
 saveRDS(d, file=fs::path(org::project$data_raw,"P2","clean","dz.RDS"))
-saveRDS(d, file=fs::path(org::project$data_raw,"P2","natasa","dz.RDS"))
 haven::write_sav(d, fs::path(org::project$data_raw,"P2", "natasa", "dz.sav"))
 # end skip
 
