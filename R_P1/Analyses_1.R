@@ -448,14 +448,14 @@ Analyses_1 <- function(dz, d_oneplusdiag, pop, folder){
   q <- q + geom_point()
   q <- q + facet_grid(.~bornSex)
   q <- q + scale_color_brewer("Age at first\ndiagnosis",palette="Set1")
-  q <- q + scale_x_continuous("Year",
-                              breaks=seq(2001,2020,2))
+  q <- q + scale_x_continuous("Year", breaks=seq(2001,2020,2))
   q <- q + scale_y_continuous("Number of people/10,000 population")
   q <- q + theme_gray(16)
   q <- q + labs(caption=caption)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
   SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex_age_incidence.png"))
+  
   q <- q + labs(caption=NULL)
   SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_born_sex_age_incidence_no_caption.png"))
   
@@ -667,15 +667,50 @@ analyses_together_2 <- function(d, pop_for_diagnosis, pop_for_legal_sex_change, 
   q <- q + geom_line()
   q <- q + geom_point()
   q <- q + scale_color_brewer("",palette="Set1")
-  q <- q + scale_x_continuous("Year",
-                              breaks=seq(2001,2020,2))
+  q <- q + scale_x_continuous("Year", breaks=seq(2001,2020,2))
   q <- q + scale_y_continuous("Number of people/10,000 population")
   q <- q + expand_limits(y=0)
   q <- q + facet_wrap(~bornSex)
   q <- q + theme_gray(16)
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q
-  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_sex_incidence.png"))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_sex_incidence_start_2001.png"), scalev=0.75)
+  
+  q <- q + scale_x_continuous("Year", breaks=seq(2001,2020,2), lim = c(2004, 2015))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_sex_incidence_start_2004.png"), scalev=0.75)
+  
+  # include coverage
+  d_coverage <- readxl::read_excel(fs::path(
+    org::project$data_raw,
+    "Coverage SKR_PAR_Psykiatri_Lakare.xlsx"
+  ))
+  setDT(d_coverage)
+  setnames(d_coverage, c(1,6), c("year", "coverage"))
+  d_coverage <- d_coverage[,.(
+    year = as.numeric(year),
+    coverage = coverage
+  )]
+  d_coverage <- na.omit(d_coverage)
+  
+  max_left <- max(long$value/long$pop*10000, na.rm=T)
+  max_right <- max(d_coverage$coverage)
+  
+  d_coverage[, scaled_value_right := coverage / max_right * max_left]
+  
+  q <- q + geom_line(data = d_coverage, mapping = aes(x=year, y=scaled_value_right, color="Coverage"))
+  q <- q + geom_point(data = d_coverage, mapping = aes(x=year, y=scaled_value_right, color="Coverage"))
+  q <- q + scale_y_continuous("Number of people/10,000 population",
+                              expand = expansion(mult = c(0, 0.1)),
+                              sec.axis = sec_axis(
+                                name = "Coverage (%)",
+                                ~ . * max_right / max_left,
+                                breaks = fhiplot::pretty_breaks(5),
+                                labels = fhiplot::format_nor
+                              )
+  )
+  q
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_sex_incidence_start_2004_with_coverage.png"), scalev=0.75)
+  
   
   agg <- d[!is.na(c_analysisCat_oneplusdiag),
            .(
@@ -733,7 +768,10 @@ analyses_together_2 <- function(d, pop_for_diagnosis, pop_for_legal_sex_change, 
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
   q <- q + theme(legend.position="bottom")
   q
-  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_sex_age_incidence.png"),landscape=F)
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_sex_age_incidence_2001.png"),landscape=F)
+  
+  q <- q + scale_x_continuous("Year", breaks=seq(2001,2020,2), lim = c(2004, 2015))
+  SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_sex_age_incidence_2004.png"), landscape=F)
   
   # 3 time periods, compare
   

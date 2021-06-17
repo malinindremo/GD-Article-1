@@ -7,21 +7,25 @@ Validate_1 <- function(d,byvar, time_period_followup){
            .(
              N=.N,
              c_isHormone=sum(get(paste0("c_isHormone_",time_period_followup))),
+             
              c_isSurgicalMasectomy=sum(get(paste0("c_isSurgicalMasectomy_",time_period_followup))),
-             c_isSurgicalBreastReconstAndOtherBreastOps=sum(get(paste0("c_isSurgicalBreastReconstAndOtherBreastOps_",time_period_followup))),
-             c_isSurgicalSterilizationAF=sum(get(paste0("c_isSurgicalSterilizationAF_",time_period_followup))),
+             c_isSurgicalBreastReconstAndOtherBreastOpsFTM=sum(get(paste0("c_isSurgicalBreastReconstAndOtherBreastOpsFTM_",time_period_followup))),
              c_isSurgicalPenisTestProsth=sum(get(paste0("c_isSurgicalPenisTestProsth_",time_period_followup))),
              c_isSurgicalInternalGenital=sum(get(paste0("c_isSurgicalInternalGenital_",time_period_followup))),
+             c_isSurgicalInternalGenital=sum(get(paste0("c_isSurgicalKolpectomy_",time_period_followup))),
+             
+             c_isSurgicalBreastReconstAndOtherBreastOpsMTF=sum(get(paste0("c_isSurgicalBreastReconstAndOtherBreastOpsMTF_",time_period_followup))),
              c_isSurgicalReconstVag=sum(get(paste0("c_isSurgicalReconstVag_",time_period_followup))),
              c_isSurgicalPenisAmp=sum(get(paste0("c_isSurgicalPenisAmp_",time_period_followup))),
              c_isSurgicalLarynx=sum(get(paste0("c_isSurgicalLarynx_",time_period_followup))),
              
              num_people_c_isSurgical=sum(
                get(paste0("c_isSurgicalMasectomy_", time_period_followup)) |
-                 get(paste0("c_isSurgicalBreastReconstAndOtherBreastOps_", time_period_followup)) |
-                 get(paste0("c_isSurgicalSterilizationAF_", time_period_followup)) |
+                 get(paste0("c_isSurgicalBreastReconstAndOtherBreastOpsFTM_", time_period_followup)) |
                  get(paste0("c_isSurgicalPenisTestProsth_", time_period_followup)) |
                  get(paste0("c_isSurgicalInternalGenital_", time_period_followup)) |
+                 get(paste0("c_isSurgicalKolpectomy_", time_period_followup)) |
+                 get(paste0("c_isSurgicalBreastReconstAndOtherBreastOpsMTF_", time_period_followup)) |
                  get(paste0("c_isSurgicalReconstVag_", time_period_followup)) |
                  get(paste0("c_isSurgicalPenisAmp_", time_period_followup)) |
                  get(paste0("c_isSurgicalLarynx_", time_period_followup))
@@ -30,10 +34,11 @@ Validate_1 <- function(d,byvar, time_period_followup){
              num_people_c_isSurgicalOrHormonal=sum(
                get(paste0("c_isHormone_", time_period_followup)) |
                  get(paste0("c_isSurgicalMasectomy_", time_period_followup)) |
-                 get(paste0("c_isSurgicalBreastReconstAndOtherBreastOps_", time_period_followup)) |
-                 get(paste0("c_isSurgicalSterilizationAF_", time_period_followup)) |
+                 get(paste0("c_isSurgicalBreastReconstAndOtherBreastOpsFTM_", time_period_followup)) |
                  get(paste0("c_isSurgicalPenisTestProsth_", time_period_followup)) |
                  get(paste0("c_isSurgicalInternalGenital_", time_period_followup)) |
+                 get(paste0("c_isSurgicalKolpectomy_", time_period_followup)) |
+                 get(paste0("c_isSurgicalBreastReconstAndOtherBreastOpsMTF_", time_period_followup)) |
                  get(paste0("c_isSurgicalReconstVag_", time_period_followup)) |
                  get(paste0("c_isSurgicalPenisAmp_", time_period_followup)) |
                  get(paste0("c_isSurgicalLarynx_", time_period_followup))
@@ -59,10 +64,11 @@ Validate_1 <- function(d,byvar, time_period_followup){
              num_people_c_isSurgicalOrHormonal=sum(
                get(paste0("c_isHormone_", time_period_followup)) |
                  get(paste0("c_isSurgicalMasectomy_", time_period_followup)) |
-                 get(paste0("c_isSurgicalBreastReconstAndOtherBreastOps_", time_period_followup)) |
-                 get(paste0("c_isSurgicalSterilizationAF_", time_period_followup)) |
+                 get(paste0("c_isSurgicalBreastReconstAndOtherBreastOpsFTM_", time_period_followup)) |
                  get(paste0("c_isSurgicalPenisTestProsth_", time_period_followup)) |
                  get(paste0("c_isSurgicalInternalGenital_", time_period_followup)) |
+                 get(paste0("c_isSurgicalKolpectomy_", time_period_followup)) |
+                 get(paste0("c_isSurgicalBreastReconstAndOtherBreastOpsMTF_", time_period_followup)) |
                  get(paste0("c_isSurgicalReconstVag_", time_period_followup)) |
                  get(paste0("c_isSurgicalPenisAmp_", time_period_followup)) |
                  get(paste0("c_isSurgicalLarynx_", time_period_followup))

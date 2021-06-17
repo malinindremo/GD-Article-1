@@ -39,7 +39,10 @@ fs::dir_create(fs::path(org::project$data_raw,"P1","clean"))
 fs::dir_create(fs::path(org::project$data_raw,"P1","gunnar"))
 fs::dir_create(fs::path(org::project$results_today,"descriptives"))
 fs::dir_create(fs::path(org::project$results_today,"validation"))
-fs::dir_create(fs::path(org::project$results_today,"analyses_diag"))
+fs::dir_create(fs::path(org::project$results_today,"analyses_diag_start_2001"))
+fs::dir_create(fs::path(org::project$results_today,"analyses_diag_start_2001_weighted_by_coverage"))
+fs::dir_create(fs::path(org::project$results_today,"analyses_diag_start_2004"))
+fs::dir_create(fs::path(org::project$results_today,"analyses_diag_start_2004_weighted_by_coverage"))
 fs::dir_create(fs::path(org::project$results_today,"analyses_treatments"))
 fs::dir_create(fs::path(org::project$results_today,"analyses_hybrid"))
 fs::dir_create(fs::path(org::project$results_today,"analyses_together"))
@@ -170,6 +173,9 @@ d[LopNr == 20842]
 time_to_diagnosis(d)
 
 # Validate_1(d, byvar="c_analysisCat_F64_089_ge4")
+
+# figure 1 > validation/
+# sup table 1 > validation/
 Validate_1(d, byvar="c_analysisCat_F64_089_2006_01_to_2014_12_ge10", time_period_followup = "2006_01_to_2016_12")
 Validate_1(d, byvar="c_analysisCat_F64_089_2006_01_to_2009_12_ge10", time_period_followup = "2006_01_to_2011_12")
 Validate_1(d, byvar="c_analysisCat_F64_089_2010_01_to_2014_12_ge10", time_period_followup = "2010_01_to_2016_12")
@@ -188,11 +194,20 @@ dz[,analysisYear_z:=c_analysisYear_treatments]
 dz[,analysisAgeCat_z:=c_analysisAgeCat_treatments]
 Analyses_1(dz=dz, d_oneplusdiag=d_oneplusdiag, pop=GetPop(), folder="analyses_treatments")
 
+# Figure 4 > analyses_diag_start_2001 > per_year_by_born_sex_age_incidence_no_caption
+# Figure 4 > analyses_diag_start_2004 > per_year_by_born_sex_age_incidence_no_caption
 dz <- d[c_analysisCat_diag=="numF64_089>=4, first diag: [2001-01-01, 2015-12-31]" & excluded=="No"]
 dz[,analysisCat_z:=c_analysisCat_diag]
 dz[,analysisYear_z:=c_analysisYear_diag]
 dz[,analysisAgeCat_z:=c_analysisAgeCat_diag]
-Analyses_1(dz=dz, d_oneplusdiag=d_oneplusdiag,pop=GetPop(), folder="analyses_diag")
+Analyses_1(dz=dz[analysisYear_z>=2001], d_oneplusdiag=d_oneplusdiag[c_analysisYear_diag>=2001],pop=GetPop(), folder="analyses_diag_start_2001")
+Analyses_1(dz=dz[analysisYear_z>=2004], d_oneplusdiag=d_oneplusdiag[c_analysisYear_diag>=2004],pop=GetPop(), folder="analyses_diag_start_2004")
+
+# Figure 4 > analyses_diag_start_2001_weighted_by_coverage > per_year_by_born_sex_age_incidence_no_caption
+# Figure 4 > analyses_diag_start_2004_weighted_by_coverage > per_year_by_born_sex_age_incidence_no_caption
+Analyses_1(dz=dz[analysisYear_z>=2001], d_oneplusdiag=d_oneplusdiag[c_analysisYear_diag>=2001],pop=GetPop(weighted = T), folder="analyses_diag_start_2001_weighted_by_coverage")
+Analyses_1(dz=dz[analysisYear_z>=2004], d_oneplusdiag=d_oneplusdiag[c_analysisYear_diag>=2004],pop=GetPop(weighted = T), folder="analyses_diag_start_2004_weighted_by_coverage")
+
 
 dz <- d[c_analysisCat_hybrid=="Hybrid" & excluded=="No"]
 dz[,analysisCat_z:=c_analysisCat_hybrid]
@@ -200,14 +215,16 @@ dz[,analysisYear_z:=c_analysisYear_hybrid]
 dz[,analysisAgeCat_z:=c_analysisAgeCat_hybrid]
 Analyses_1(dz=dz, d_oneplusdiag=d_oneplusdiag,pop=GetPop(), folder="analyses_hybrid")
 
-# Figure 2, Figure 3
+# Figure 2 > analyses_together
+# Figure 3 > analyses_together
 analyses_together_2(
   d,
   pop_for_diagnosis = GetPop(), 
   pop_for_legal_sex_change = GetPop(), 
   folder="analyses_together")
 
-# Figure 2, Figure 3
+# Figure 2 > analyses_together
+# Figure 3 > analyses_together
 analyses_together_2(
   d,
   pop_for_diagnosis = GetPop(weighted = T), 
