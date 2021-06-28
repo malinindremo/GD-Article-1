@@ -11,11 +11,11 @@ time_to_diagnosis <- function(d){
       excluded %in% c("No") &
       dateFirst_F64_089 >= "2006-01-01" & 
       dateFirst_F64_089 <= "2015-12-31" &
-      (c_analysisCat_treatments_years_to_first_date_of_surgery_hormones>=0 | is.na(c_analysisCat_treatments_years_to_first_date_of_surgery_hormones))
+      (c_analysisCat_treatments_years_to_first_date_of_surgery_hormones>=0 | is.na(c_analysisCat_treatments_years_to_first_date_of_surgery_hormones)) &
+      c_analysisCat_diag == "numF64_089>=4, first diag: [2001-01-01, 2015-12-31]"
     ]
   pd[,event:=!is.na(c_analysisCat_treatments_years_to_first_date_of_surgery_hormones)]
   pd[event==0,c_analysisCat_treatments_years_to_first_date_of_surgery_hormones:=difftime(as.Date("2016-12-31"),dateFirst_F64_089)/365.25]
-  
   
   fit <- survival::survfit(survival::Surv(c_analysisCat_treatments_years_to_first_date_of_surgery_hormones, event) ~ 1, data = pd)
   res <- survminer::surv_summary(fit)
@@ -25,7 +25,7 @@ time_to_diagnosis <- function(d){
   q <- q + geom_step()
   q <- q + scale_y_continuous("P(receiving surgery/hormones)",lim=c(0,1),expand=c(0,0))
   q <- q + scale_x_continuous("Years from first F64.0/8/9 diagnosis",lim=c(0,5))
-  q <- q + labs(caption="\nKaplan-Meier analysis restricted to first F64.0/8/9 diagnosis between 2006-01-01 and 2015-12-31. Follow-up ends 2016-12-31.")
+  q <- q + labs(caption="\nKaplan-Meier analysis restricted to people with 4 or more F64.0/8/9 diagnoses, with first F64.0/8/9 diagnosis between 2006-01-01 and 2015-12-31. Follow-up ends 2016-12-31.")
   q <- q + theme_fhi_lines()
   SaveA4(
     q, 
@@ -90,7 +90,7 @@ time_to_diagnosis <- function(d){
   q <- q + scale_color_brewer("",palette="Set1")
   q <- q + theme_fhi_lines()
   q <- q + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
-  q <- q + labs(caption="\nKaplan-Meier analysis restricted to first F64.0/8/9 diagnosis between 2006-01-01 and 2015-12-31. Follow-up ends 2016-12-31.")
+  q <- q + labs(caption="\nKaplan-Meier analysis restricted to people with 4 or more F64.0/8/9 diagnoses,\nwith first F64.0/8/9 diagnosis between 2006-01-01 and 2015-12-31.\nFollow-up ends 2016-12-31.")
   SaveA4(
     q, 
     filename = fs::path(

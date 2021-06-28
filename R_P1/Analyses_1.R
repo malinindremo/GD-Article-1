@@ -666,7 +666,7 @@ analyses_together_2 <- function(d, pop_for_diagnosis, pop_for_legal_sex_change, 
   q <- ggplot(long,aes(x=c_analysisYear_oneplusdiag,y=value/pop*10000,colour=variable))
   q <- q + geom_line()
   q <- q + geom_point()
-  q <- q + scale_color_brewer("",palette="Set1")
+  q <- q + scale_color_brewer("",palette="Set1", direction = 1)
   q <- q + scale_x_continuous("Year", breaks=seq(2001,2020,2))
   q <- q + scale_y_continuous("Number of people/10,000 population")
   q <- q + expand_limits(y=0)
@@ -697,16 +697,17 @@ analyses_together_2 <- function(d, pop_for_diagnosis, pop_for_legal_sex_change, 
   
   d_coverage[, scaled_value_right := coverage / max_right * max_left]
   
-  q <- q + geom_line(data = d_coverage, mapping = aes(x=year, y=scaled_value_right, color="Coverage"))
-  q <- q + geom_point(data = d_coverage, mapping = aes(x=year, y=scaled_value_right, color="Coverage"))
-  q <- q + scale_y_continuous("Number of people/10,000 population",
-                              expand = expansion(mult = c(0, 0.1)),
-                              sec.axis = sec_axis(
-                                name = "Coverage (%)",
-                                ~ . * max_right / max_left,
-                                breaks = fhiplot::pretty_breaks(5),
-                                labels = fhiplot::format_nor
-                              )
+  q <- q + geom_line(data = d_coverage, mapping = aes(x=year, y=scaled_value_right, color="Coverage"), linetype = 3)
+  q <- q + geom_point(data = d_coverage, mapping = aes(x=year, y=scaled_value_right, color="Coverage"), alpha = 0.5)
+  q <- q + scale_y_continuous(
+    ifelse(folder=="analyses_together_weighted_by_coverage","Number of people/10,000 weighted population","Number of people/10,000 population"),
+    expand = expansion(mult = c(0, 0.1)),
+    sec.axis = sec_axis(
+      name = "Coverage (%)",
+      ~ . * max_right / max_left,
+      breaks = fhiplot::pretty_breaks(5),
+      labels = fhiplot::format_nor
+    )
   )
   q
   SaveA4(q, fs::path(org::project$results_today,folder,"per_year_by_sex_incidence_start_2004_with_coverage.png"), scalev=0.75)
